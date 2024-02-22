@@ -4,29 +4,18 @@ from typing import List
 
 # Third party imports
 import json
-import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
 
-def obtain_google_oauth_credentials():
-    # Disable OAuthlib's HTTPS verification when running locally.
-    # *DO NOT* leave this option enabled in production.
-    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
-    # Set the scope to be youtube readonly
-    scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
-
-    # Retrieve oauth credetials from the stored file
-    client_secrets_file = os.path.join("assets", "google_oauth_token.json")
-
-    # Get credentials and create an API client
-    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        client_secrets_file, scopes)
-    return flow.run_local_server()
+# Package imports
+from obtain_google_oauth_credentials import obtain_google_oauth_credentials
 
 api_service_name = "youtube"
 api_version = "v3"
-credentials = obtain_google_oauth_credentials()
+
+# Set the scope to be youtube readonly
+scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
+credentials = obtain_google_oauth_credentials(scopes=scopes)
 
 def getAllVideos(channel_id: str) -> List:
     """
