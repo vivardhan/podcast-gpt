@@ -56,8 +56,6 @@ def download_audio(folder_path: str, file_name: str, video_url: str) -> None:
 			blob = bucket.blob(output_file)
 			blob.upload_from_filename(output_file)
 
-
-
 def download_all_audios(podcast: str) -> None:
 	podcast_folder = os.path.join(DATA_FOLDER, podcast)
 	audio_folder = os.path.join(podcast_folder, AUDIO_DATA_FOLDER)
