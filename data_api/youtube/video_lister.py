@@ -8,7 +8,7 @@ import googleapiclient.discovery
 import googleapiclient.errors
 
 # Package imports
-from obtain_google_oauth_credentials import obtain_google_oauth_credentials
+from google_oauth_credentials import obtain_google_oauth_credentials
 
 api_service_name = "youtube"
 api_version = "v3"
