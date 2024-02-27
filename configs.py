@@ -4,7 +4,11 @@ import os
 from typing import List
 
 # Folder paths
-AUDIO_DATA_FOLDER = "audio_data"    
+AUDIO_DATA_FOLDER = "audio_data"
+TEXT_DATA_FOLDER = "text_data"
+RAW_TRANSCRIPT_FOLDER = "raw_transcripts"
+SPEAKER_TRANSCRIPT_FOLDER = "speaker_transcripts"
+TXT_EXT = "txt"   
 
 @dataclass
 class YoutubeFeedConfig:
