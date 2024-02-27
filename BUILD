@@ -52,8 +52,6 @@ py_binary(
 	main="data_api/speech_to_text/assembly_ai_transcriber.py",
 	deps=[
 		":configs",
-	],
-	data=[
-		"data_api/data"
+		":utils",
 	],
 )
