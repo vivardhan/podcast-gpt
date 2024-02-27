@@ -55,3 +55,15 @@ py_binary(
 		":utils",
 	],
 )
+
+py_binary(
+	name="transcript_stats",
+	srcs=[
+		"data_api/transcript_inspector/main.py",
+	],
+	main="data_api/transcript_inspector/main.py",
+	deps=[
+		":configs",
+		":utils",
+	],
+)

@@ -20,5 +20,9 @@ def list_files_gcs(client_provider: GoogleClientProvider, prefix: str, extension
 		if f.name.endswith(extension)
 	]
 
+# Use this for audio files
 def download_file_gcs(client_provider: GoogleClientProvider, filepath: str) -> None:
 	client_provider.DATA_BUCKET.blob(filepath).download_to_filename(filepath)
+
+def download_textfile_as_string_gcs(client_provider: GoogleClientProvider, filepath: str) -> str:
+	return client_provider.DATA_BUCKET.blob(filepath).download_as_string()

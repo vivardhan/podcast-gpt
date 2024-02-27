@@ -62,5 +62,9 @@ bazel run //:speech_to_text
 This will create 2 sets of transcriptions, one without speaker identifiers and one with speaker identifiers. Both transcripts will be uploaded to GCS.
 
 ### 2.3 Accessing transcripts
-There is currently no binary for accessing transcripts. However, this can be achieved by using the `list_files_gcs` and `download_file_gcs` functions in `data_api/utils/gcs_utils.py`. Note that your binary should only instantiate one `GoogleClientProvider()` and use it everywhere. See the existing binaries for Downloading Audio (`data_api/audio_download/main.py`) and Speech To Text (`data_api/speech_to_text/assembly_ai_transcriber.py`) for examples.
+Run the following to see how many words are in all the raw transcripts for each podcast:
+```bash
+bazel run //:transcript_stats
+```
+This binary (see `data_api/transcript_inspector/main.py`) also shows how to access the contents of transcripts.
 
