@@ -1,0 +1,51 @@
+py_library(
+	name="utils",
+	srcs=[
+		"utils/file_utils.py",
+		"utils/gcs_utils.py",
+	],
+	deps=[
+		"//:google_utils",
+	]
+)
+
+py_binary(
+	name="download_audio_files",
+	srcs=[
+		"audio_download/main.py",
+		"audio_download/audio_downloader.py",
+		"audio_download/rss/rss_audio_downloader.py",
+		"audio_download/youtube/youtube_audio_downloader.py",
+		"audio_download/youtube/video_lister.py",
+	],
+	main="audio_download/main.py",
+	deps=[
+		"//:configs",
+		"//:google_utils",
+		":utils",
+	],
+)
+
+py_binary(
+	name="transcribe_audio_files",
+	srcs=[
+		"speech_to_text/assembly_ai_transcriber.py"
+	],
+	main="speech_to_text/assembly_ai_transcriber.py",
+	deps=[
+		"//:configs",
+		":utils",
+	],
+)
+
+py_binary(
+	name="transcript_stats",
+	srcs=[
+		"transcript_inspector/main.py",
+	],
+	main="transcript_inspector/main.py",
+	deps=[
+		"//:configs",
+		":utils",
+	],
+)

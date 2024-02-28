@@ -51,20 +51,20 @@ The data API supports downloading audio files for podcast episodes, transcribing
 ### 2.1 Downloading audio
 To download all audio files for the supported podcasts and upload them to GCS, run the following:
 ```bash
-bazel run //:audio_download
+bazel run //data_api:download_audio_files
 ```
 
 ### 2.2 Transcribing audio
 To transcribe audio files that have been put in GCS, run the following:
 ```bash
-bazel run //:speech_to_text
+bazel run //data_api:transcribe_audio_files
 ```
 This will create 2 sets of transcriptions, one without speaker identifiers and one with speaker identifiers. Both transcripts will be uploaded to GCS.
 
 ### 2.3 Accessing transcripts
 Run the following to see how many words are in all the raw transcripts for each podcast:
 ```bash
-bazel run //:transcript_stats
+bazel run //data_api:transcript_stats
 ```
 This binary (see `data_api/transcript_inspector/main.py`) also shows how to access the contents of transcripts.
 
