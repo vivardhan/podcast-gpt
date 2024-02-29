@@ -1,6 +1,6 @@
 # System Imports
 import abc
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 class LLMQAGenerator(metaclass=abc.ABCMeta)::
 	"""
@@ -14,16 +14,19 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 		# eg. inference settings can be initialized here
 
 	@abc.abstractmethod
-	def load_llm(self, model_name: str, seed: int) -> None:
+	def load_llm(self, model_name: str, seed: int) -> Any:
 		"""
 		Loads the LLM and assigns it to self.model
+
+		TODO(vivardhan.kanoria) the return type should be updated
+		to the transformers library model class
 
 		params:
 			model_name: The string identifier for the model
 			seed: The seed to initialize the model with
 		
 		returns:
-			None
+			The initialized model
 		"""
 		pass
 
