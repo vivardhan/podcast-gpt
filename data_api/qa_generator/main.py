@@ -40,5 +40,5 @@ def main():
 	# 		for t in transcript_files:
 	# 			text = download_textfile_as_string_gcs(gc_provider, t)
 	# 			qa_pairs = model.generate_question_answer_pairs(text)
-	# 			output_file_path = os.path.join(qa_pairs_prefix, g.model_name, t)
+	# 			output_file_path = os.path.join(qa_pairs_prefix, model_name, t)
 	# 			upload_string_as_textfile_gcs(output_file_path, json.dumps(qa_pairs))
