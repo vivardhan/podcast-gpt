@@ -59,7 +59,7 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 		Parse the model output into a list of question answer pairs
 
 		params:
-			model_output string
+			model_output: inference result
 
 		returns
 			a List of question answer tuples, i.e.:
