@@ -49,3 +49,16 @@ py_binary(
 		":utils",
 	],
 )
+
+py_binary(
+	name="generate_qa_data",
+	srcs=[
+		"qa_generator/llm_qa_generator.py",
+		"qa_generator/main.py",
+	],
+	main="qa_generator/main.py",
+	deps[
+		"//:configs",
+		":utils",
+	],
+)
