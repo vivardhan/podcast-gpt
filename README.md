@@ -69,7 +69,7 @@ bazel run //data_api:transcript_stats
 This binary (see `data_api/transcript_inspector/main.py`) also shows how to access the contents of transcripts.
 
 ### 2.4 Using LLMs to generate question/answer data
-Here, we wish to generate question/answer pairs for the purpose finetuning our Podcast GPT model as well as for evaluation purposes. The technique to do this automatically, is to provide transcripts of podcast episodes to existing LLMs in the form of a prompt, asking the LLM to convert the transcript into a list of questions and answers. These question and answer pairs will be saved to GCS for further use in training and evaluation.
+Here, we wish to generate question/answer pairs for the purpose finetuning our Podcast GPT model as well as for evaluation purposes. The technique to do this automatically, is to provide transcripts of podcast episodes to existing LLMs in the form of a prompt, asking the LLM to convert the transcript into a list of question and answer pairs. These question and answer pairs will be saved to GCS for further use in training and evaluation.
 Run the following binary (still WIP) to obtain the question/answer pairs:
 ```bash
 bazel run //data_api:generate_qa_data
