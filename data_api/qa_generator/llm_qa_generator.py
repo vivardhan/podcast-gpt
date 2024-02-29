@@ -8,13 +8,13 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 	using LLMs to convert podcast transcripts into question answer pairs.
 	"""
 
-	def __init__(self, model_name: str, seed: int):
-		self.model = load_llm(model_name, seed)
+	def __init__(self, model_name: str):
+		self.model = load_llm(model_name)
 		# Perform any additional setup in your derived class, 
 		# eg. inference settings can be initialized here
 
 	@abc.abstractmethod
-	def load_llm(self, model_name: str, seed: int) -> Any:
+	def load_llm(self, model_name: str) -> Any:
 		"""
 		Loads the LLM and assigns it to self.model
 
@@ -23,7 +23,6 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 
 		params:
 			model_name: The string identifier for the model
-			seed: The seed to initialize the model with
 		
 		returns:
 			The initialized model
@@ -94,5 +93,3 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 		prompt = self.create_transcript_prompt(transcript)
 		output = self.run_model_inference(prompt)
 		return self.parse_model_output(output)
-
-
