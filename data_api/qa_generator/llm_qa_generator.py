@@ -8,7 +8,7 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 	using LLMs to convert podcast transcripts into question answer pairs.
 	"""
 
-	def __init__(self, model_name: str):
+	def __init__(self):
 		self.model = load_llm(model_name)
 		# Perform any additional setup in your derived class, 
 		# eg. inference settings can be initialized here
@@ -16,8 +16,8 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 	@abc.abstractmethod
 	def load_llm(self, model_name: str) -> Any:
 		"""
-		Loads the LLM and assigns it to self.model
-
+		Loads the LLM and returns it
+		
 		TODO(vivardhan.kanoria) the return type should be updated
 		to the transformers library model class
 
