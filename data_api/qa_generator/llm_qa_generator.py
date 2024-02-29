@@ -9,7 +9,7 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 	"""
 
 	def __init__(self, model_name: str):
-		self.model = load_llm(model_name)
+		self.model = self.load_llm(model_name)
 		# Perform any additional setup in your derived class, 
 		# eg. inference settings can be initialized here
 
