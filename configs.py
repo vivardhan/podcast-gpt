@@ -8,6 +8,7 @@ AUDIO_DATA_FOLDER = "audio_data"
 TEXT_DATA_FOLDER = "text_data"
 RAW_TRANSCRIPT_FOLDER = "raw_transcripts"
 SPEAKER_TRANSCRIPT_FOLDER = "speaker_transcripts"
+QA_PAIRS_FOLDER = "qa_pairs"
 TXT_EXT = "txt"   
 
 @dataclass
