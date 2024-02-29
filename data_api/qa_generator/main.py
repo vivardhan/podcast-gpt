@@ -41,5 +41,4 @@ def main():
 				# Uncomment this section once qa_generators, above, is setup
 				# qa_pairs = g.generate_question_answer_pairs(text)
 				# output_file_path = os.path.join(qa_pairs_prefix, g.model_name, t)
-				# with open(output_file_path, "w") as f:
-				# 	upload_string_as_textfile_gcs(output_file_path, json.dumps(qa_pairs))
+				# upload_string_as_textfile_gcs(output_file_path, json.dumps(qa_pairs))
