@@ -10,7 +10,6 @@ from configs import (
 	TXT_EXT,
 	QA_PAIRS_FOLDER,
 )
-from data_api.file_utils import create_temp_local_directory, delete_temp_local_directory
 from data_api.utils.gcs_utils import (
 	download_textfile_as_string_gcs,
     list_files_gcs,
