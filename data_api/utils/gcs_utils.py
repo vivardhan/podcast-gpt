@@ -25,7 +25,7 @@ def download_file_gcs(client_provider: GoogleClientProvider, filepath: str) -> N
 	client_provider.DATA_BUCKET.blob(filepath).download_to_filename(filepath)
 
 def download_textfile_as_string_gcs(client_provider: GoogleClientProvider, filepath: str) -> str:
-	return client_provider.DATA_BUCKET.blob(filepath).download_as_string()
+	return client_provider.DATA_BUCKET.blob(filepath).download_as_string().decode('ASCII')
 
 def upload_string_as_textfile_gcs(client_provider, GoogleClientProvider, filepath: str, string: str) -> None:
 	client_provider.DATA_BUCKET.blob(filepath).upload_from_string(string)
