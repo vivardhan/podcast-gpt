@@ -57,7 +57,7 @@ py_binary(
 		"qa_generator/main.py",
 	],
 	main="qa_generator/main.py",
-	deps[
+	deps=[
 		"//:configs",
 		":utils",
 	],
