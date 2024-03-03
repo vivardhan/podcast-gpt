@@ -7,6 +7,7 @@ py_library(
 	],
 	data=[
 		"assets/google_oauth_token.json",
+		"assets/compute_engine_key.json"
 	],
 )
 
