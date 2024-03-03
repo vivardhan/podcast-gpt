@@ -32,7 +32,10 @@ def obtain_google_oauth_credentials(scopes: List[str]) -> google.oauth2.credenti
 
     # Get credentials
     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        client_secrets_file, scopes)
+        client_secrets_file, 
+        scopes,
+        redirect_uri="https://www.google.com",
+    )
     return flow.run_local_server(open_browser=False)
 
     # return google_auth_oauthlib.get_user_credentials(
