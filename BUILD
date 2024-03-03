@@ -6,7 +6,6 @@ py_library(
 		"google_client_provider.py",
 	],
 	data=[
-		"assets/google_oauth_token.json",
 		"assets/compute_engine_key.json"
 	],
 )
