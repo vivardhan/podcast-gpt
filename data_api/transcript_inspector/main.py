@@ -17,6 +17,7 @@ from google_client_provider import GoogleClientProvider
 def main():
 	gc_provider = GoogleClientProvider()
 	for podcast_name, config in podcast_configs.items():
+		print("Computing stats for {}".format(podcast_name))
 		raw_transcript_prefix = os.path.join(podcast_name, TEXT_DATA_FOLDER, RAW_TRANSCRIPT_FOLDER)
 		text_files = list_files_gcs(gc_provider, raw_transcript_prefix, TXT_EXT)
 		total_words = 0
