@@ -7,10 +7,10 @@ from typing import List
 from pytube import Stream, YouTube
 
 # Package imports
-from audio_downloader import AudioDownloader, DownloadStream
+from data_api.audio_download.audio_downloader import AudioDownloader, DownloadStream
 from configs import YoutubeFeedConfig
 from data_api.utils.gcs_utils import file_exists_gcs, upload_to_gcs
-from youtube.video_lister import get_all_videos
+from data_api.audio_download.youtube.video_lister import get_all_videos
 
 YOUTUBE_PREFIX = "https://www.youtube.com/watch?v="
 

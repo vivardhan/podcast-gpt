@@ -7,7 +7,7 @@ from urllib.request import urlretrieve
 import feedparser
 
 # Package Imports
-from audio_downloader import DownloadStream, AudioDownloader
+from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
 from configs import RSSFeedConfig
 from data_api.utils.gcs_utils import file_exists_gcs, upload_to_gcs
 

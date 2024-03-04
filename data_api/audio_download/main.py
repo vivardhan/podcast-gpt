@@ -2,11 +2,11 @@
 from typing import Union
 
 # Package Imports
-from audio_downloader import AudioDownloader
 from configs import podcast_configs, RSSFeedConfig, YoutubeFeedConfig
 from google_client_provider import GoogleClientProvider
-from rss.rss_audio_downloader import RSSAudioDownloader
-from youtube.youtube_audio_downloader import YoutubeAudioDownloader
+from data_api.audio_download.audio_downloader import AudioDownloader
+from data_api.audio_download.rss.rss_audio_downloader import RSSAudioDownloader
+from data_api.audio_download.youtube.youtube_audio_downloader import YoutubeAudioDownloader
 
 def DownloaderFactory(name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig], gc_provider: GoogleClientProvider) -> AudioDownloader:
 	if type(config) == YoutubeFeedConfig:
