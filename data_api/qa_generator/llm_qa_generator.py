@@ -2,14 +2,14 @@
 import abc
 from typing import Any, List, Tuple
 
-class LLMQAGenerator(metaclass=abc.ABCMeta)::
+class LLMQAGenerator(metaclass=abc.ABCMeta):
 	"""
 	This is an abstract class which specifies an interface for 
 	using LLMs to convert podcast transcripts into question answer pairs.
 	"""
 
 	def __init__(self, model_name: str):
-		self.model = self.load_llm(model_name)
+		self.pipeline = self.load_llm(model_name)
 		# Perform any additional setup in your derived class, 
 		# eg. inference settings can be initialized here
 
@@ -30,7 +30,7 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 		pass
 
 	@abc.abstractmethod
-	def create_transcript_prompt(self, transcript: str) -> str:
+	def create_qa_prompt(self, transcript: str) -> str:
 		"""
 		Given a transcript file, creats a prompt to run inference with.
 
@@ -90,6 +90,6 @@ class LLMQAGenerator(metaclass=abc.ABCMeta)::
 				(question_n), answer_n),
 			]
 		"""
-		prompt = self.create_transcript_prompt(transcript)
+		prompt = self.create_qa_prompt(transcript)
 		output = self.run_model_inference(prompt)
 		return self.parse_model_output(output)
