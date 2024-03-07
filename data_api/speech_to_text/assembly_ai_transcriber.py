@@ -30,7 +30,7 @@ from google_client_provider import GoogleClientProvider
 # Replace with your API key
 aai.settings.api_key = "9b22f02582ac4fdf892ba609d1080da0"
 
-config = aai.TranscriptionConfig(speaker_labels=True, speakers_expected=2)
+config = aai.TranscriptionConfig(speaker_labels=True, auto_chapters=True)
 transcriber = aai.Transcriber()
 
 @dataclass
