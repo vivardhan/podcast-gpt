@@ -62,3 +62,15 @@ py_binary(
 		":utils",
 	],
 )
+
+py_binary(
+	name="backfill_raw_transcripts",
+	srcs=[
+		"speech_to_text/raw_transcript_backfill.py",
+	],
+	main="speech_to_text/raw_transcript_backfill.py",
+	deps=[
+		"//:configs",
+		":utils",
+	],
+)
