@@ -30,3 +30,6 @@ def download_textfile_as_string_gcs(client_provider: GoogleClientProvider, filep
 def upload_string_as_textfile_gcs(client_provider: GoogleClientProvider, filepath: str, string: str) -> None:
 	print("Uploading to GCS: {}".format(filepath))
 	client_provider.DATA_BUCKET.blob(filepath).upload_from_string(string)
+
+def delete_file_gcs(client_provider: GoogleClientProvider, filepath: str) -> None:
+	client_provider.DATA_BUCKET.blob(filepath).delete()
