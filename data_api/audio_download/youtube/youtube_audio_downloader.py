@@ -58,7 +58,7 @@ class YoutubeAudioDownloader(AudioDownloader):
 		if curr_pos == -1:
 			return None
 
-		pattern = '(\n[0-9][0-9]:[0-5][0-9]:[0-5][0-9] )(.*\n)'
+		pattern = '(\n[0-9][0-9]:[0-5][0-9]:[0-5][0-9] )(.*?\n)'
 
 		curr_pos += len(timestamp_str)
 		chapters = re.findall(pattern, description[curr_pos:])
