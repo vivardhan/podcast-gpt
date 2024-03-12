@@ -12,6 +12,7 @@ SPEAKER_TRANSCRIPT_FOLDER = "speaker_transcripts"
 QA_PAIRS_FOLDER = "qa_pairs"
 TXT_EXT = "txt"
 JSON_EXT = "json"
+CHAPTERS_SUFFIX = "chapters"
 
 @dataclass
 class YoutubeFeedConfig:
