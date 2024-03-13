@@ -74,3 +74,15 @@ py_binary(
 		":utils",
 	],
 )
+
+py_binary(
+	name="chapterize_transcripts",
+	srcs=[
+		"qa_generator/transcript_chapterizer.py",
+	],
+	main="qa_generator/transcript_chapterizer.py",
+	deps=[
+		"//:configs",
+		":utils",
+	],
+)
