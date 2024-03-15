@@ -1,13 +1,15 @@
 # System Imports
 from bisect import bisect
+from dataclasses import dataclass
 import json
 import os
-from typing import Dict
+from typing import Dict, List
 
 # Package Imports
 from configs import (
 	ASSEMBLY_AI_FOLDER,
 	AUDIO_DATA_FOLDER,
+	CHAPTERIZED_DATA_FOLDER,
 	CHAPTERS_SUFFIX,
 	JSON_EXT,
 	podcast_configs,
@@ -15,15 +17,123 @@ from configs import (
 	TXT_EXT,
 )
 from google_client_provider import GoogleClientProvider
-from data_api.utils.file_utils import (
-	create_temp_local_directory,
-	delete_temp_local_directory,
-)
 from data_api.utils.gcs_utils import (
-	download_file_gcs,
+	download_textfile_as_string_gcs,
 	file_exists_gcs,
 	list_files_gcs,
+	upload_string_as_textfile_gcs,
 )
+
+SENTENCE_END_PUNCTUATIONS = ['.', '?', '!']
+
+@dataclass
+class Boundary:
+	"""
+	Encapsulates information about a boundary in a transcript
+	"""
+
+	# The timestamp of a word
+	timestamp: int
+
+	# The index of a word
+	index: int
+
+def determine_sentence_boundaries(words_list: json) -> List[Boundary]:
+	"""
+	Determines timestamps at which there are sentence boundaries in a transcript, given its words_list
+
+	params:
+		words_list:
+			The list of words, each element is formatted as follows:
+			{"text": "something", "start": 10345, "end": 10350, "confidence": 0.99, "speaker": "A"},
+			where "start" and "end" are in milliseconds
+
+	returns:
+		The list of boundaries at which there are sentence changes.
+	"""
+
+	boundaries = [Boundary(timestamp=0, index=0)]
+	previous_word = None
+	for index, w in enumerate(words_list):
+		if previous_word and previous_word["text"][-1] in SENTENCE_END_PUNCTUATIONS:
+			boundaries.append(
+				Boundary(
+					timestamp=previous_word["end"],
+					index=index,
+				)
+			)
+
+		previous_word = w
+
+	return boundaries
+
+def determine_speaker_change_boundaries(words_list: json) -> List[Boundary]:
+	"""
+	Determines timestamps at which the speaker changes in a transcript, given its words_list
+
+	params:
+		words_list:
+			The list of words, each element is formatted as follows:
+			{"text": "something", "start": 10345, "end": 10350, "confidence": 0.99, "speaker": "A"},
+			where "start" and "end" are in milliseconds
+
+	returns:
+		The list of boundaries at which there are speaker changes.
+	"""
+
+	boundaries = [Boundary(timestamp=0, index=0)]
+	curr_speaker = words_list[0]["speaker"]
+	for index, w in enumerate(words_list):
+		if w["speaker"] != curr_speaker:
+			boundaries.append(Boundary(timestamp=w["end"], index=index))
+
+		curr_speaker = w["speaker"]
+
+	return boundaries
+
+def determine_break_boundaries(words_list: json, num_speakers: int) -> List[Boundary]:
+	"""
+	Determines boundaries at which to split a transcript, given its words_list
+
+	If there is only one speaker, the timestamps correspond to sentence boundaries.
+	If there are more than one speaker, the timestamps correspond to speaker change boundaries.
+
+	params:
+		words_list:
+			The list of words, each element is formatted as follows:
+			{"text": "something", "start": 10345, "end": 10350, "confidence": 0.99, "speaker": "A"},
+			where "start" and "end" are in milliseconds
+		num_speakers:
+			The number of speakers in the transcipt
+
+	returns:
+		The list of boundaries at which the transcript can be split
+	"""
+	if num_speakers == 1:
+		return determine_sentence_boundaries(words_list)
+	else:
+		return determine_speaker_change_boundaries(words_list)
+
+def count_num_speakers(words_list: json) -> int:
+	"""
+	Determines the number of speakers in a transcript, given its words_list
+
+	params:
+		words_list:
+			The list of words, each element is formatted as follows:
+			{"text": "something", "start": 10345, "end": 10350, "confidence": 0.99, "speaker": "A"},
+			where "start" and "end" are in milliseconds
+
+	returns:
+		The no. of speakers.
+	"""
+
+	speakers = set()
+	for w in words_list:
+		speakers.add(w["speaker"])
+
+	return len(speakers)
+
 
 def construct_chapter_text(words_list: json, start_index: int, end_index: int, num_speakers: int) -> str:
 	"""
@@ -39,11 +149,6 @@ def construct_chapter_text(words_list: json, start_index: int, end_index: int, n
 			The index in words_list where the returned text should start
 		end_index:
 			The index in words_list where the returned text should end
-			Note that this is a suggested end index. The logic followed in this function is: 
-				- if there are multiple speakers, continue until the speaker changes
-				- if there is only one speaker, stop at the end of the current sentence
-		num_speakers:
-			The number of speakers in this transcipt
 
 	returns:
 		A text transcript, eg.
@@ -63,38 +168,14 @@ def construct_chapter_text(words_list: json, start_index: int, end_index: int, n
 	for index in range(start_index, end_index):
 		curr_word = words_list[index]
 		curr_speaker = curr_word["speaker"]
-		if not prev_speaker or prev_speaker != curr_speaker:
-			text = text.strip() + "\n\nSpeaker {}:\n".format(curr_speaker)
+		if num_speakers > 1:
+			if not prev_speaker or prev_speaker != curr_speaker:
+				text = text.strip() + "\n\nSpeaker {}:\n".format(curr_speaker)
 
 		text += curr_word["text"] + " "
 		prev_speaker = curr_speaker
 
-	text = text.strip()
-
-	assert num_speakers >= 1
-	
-	if num_speakers == 1:
-		while text[-1] not in ['.', '?', '!']:
-			index += 1
-			if index >= len(words_list):
-				break
-
-			curr_word = words_list[index]
-			text += " " + curr_word["text"]
-	else:
-		while True:
-			index += 1
-			if index >= len(words_list):
-				break
-
-			curr_speaker = curr_word["speaker"]
-			if curr_speaker != prev_speaker:
-				break
-
-			curr_word = words_list[index]
-			text += " " + curr_word["text"]
-
-	return text
+	return text.strip()
 
 def convert_timestamp_string_to_milliseconds(timestamp_string: str) -> int:
 	"""
@@ -112,6 +193,8 @@ def convert_timestamp_string_to_milliseconds(timestamp_string: str) -> int:
 		The timestamp in milliseconds
 	"""
 	parts = timestamp_string.split(':')
+	if (len(parts) > 3):
+		print(timestamp)
 	assert len(parts) <= 3
 
 	conversion_factor = 1000
@@ -135,69 +218,91 @@ def split_transcript_into_chapters(assembly_ai_transcript: json, chapters: json)
 		Dictionary that maps chapter titles to transcript text for the chapter
 
 	"""
-	print(chapters)
 	chapter_transcripts = {}
 	words_list = assembly_ai_transcript["words"]
+	num_speakers = count_num_speakers(words_list)
+	transcript_break_boundaries = determine_break_boundaries(words_list, num_speakers)
+
 	curr_index = 0
 	for index, c in enumerate(chapters):
 		start_time_str = c[0]
 		title = c[1]
 
 		start_time_ms = convert_timestamp_string_to_milliseconds(start_time_str)
-		start_elem = bisect(words_list, start_time_ms, lo=curr_index, key=lambda elem : elem['start'])
+		start_boundary_index = bisect(transcript_break_boundaries, start_time_ms, lo=curr_index, key=lambda elem : elem.timestamp)
+		start_elem = transcript_break_boundaries[max(0, start_boundary_index - 1)]
 
 		if index < len(chapters) - 1:
 			end_time_ms = convert_timestamp_string_to_milliseconds(chapters[index + 1][0])
-			end_elem = bisect(words_list, end_time_ms, lo=start_elem, key=lambda elem : elem['end'])
+			end_boundary_index = bisect(transcript_break_boundaries, end_time_ms, lo=start_boundary_index, key=lambda elem : elem.timestamp)
 		else:
-			end_elem = len(words_list)
+			end_boundary_index = len(transcript_break_boundaries) - 1
 
-		chapter_transcripts[title] = construct_chapter_text(words_list, start_elem, end_elem, 2)
-		curr_index = end_elem
+		end_elem = transcript_break_boundaries[end_boundary_index] if end_boundary_index < len(transcript_break_boundaries) else transcript_break_boundaries[-1]
+
+		chapter_transcripts[title] = construct_chapter_text(words_list, start_elem.index, end_elem.index, num_speakers)
+		curr_index = end_boundary_index
 
 	return chapter_transcripts
 
 
+def chapterize_all_transcripts(gc_provider: GoogleClientProvider, podcast_name: str) -> None:
+	"""
+	Creates transcripts for each chapter in each transcript for a given podcast
+
+	params:
+		gc_provider:
+			The google client provider for GCS access
+		podcast name:
+			The name of the podcast
+
+	returns:
+		None
+		
+		The resulting chapterized transcripts are saved to gcs, one file per podcast episode
+		A dictionary mapping the podcast episode title to chapter headings and their transcripts, i.e.
+
+		filename: "episode_1.json", contents:
+		{
+			"chapter_1": {"transcript_1 - hi, welcome"},
+			"chapter_2": {"topic_1 - bla bla"},
+				...
+		}
+
+
+	"""
+	assembly_transcripts_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, ASSEMBLY_AI_FOLDER)
+	assembly_transcript_files = list_files_gcs(gc_provider, assembly_transcripts_folder, JSON_EXT)
+	audio_folder = os.path.join(podcast_name, AUDIO_DATA_FOLDER)
+
+	chapterized_data_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, CHAPTERIZED_DATA_FOLDER)
+
+	for transcript_file in assembly_transcript_files:
+		transcript_title = os.path.basename(transcript_file)
+		chapterized_file = os.path.join(chapterized_data_folder, transcript_title)
+		# if file_exists_gcs(gc_provider, chapterized_file):
+		# 	continue
+
+		chapters_filename = transcript_title[:-(len(JSON_EXT) + 1)] + "_{}.{}".format(CHAPTERS_SUFFIX, JSON_EXT)
+		chapters_file = os.path.join(audio_folder, chapters_filename)
+
+		if not file_exists_gcs(gc_provider, chapters_file):
+			continue
+
+		print("Chapterizing: {}".format(transcript_title))
+
+		transcript_text = download_textfile_as_string_gcs(gc_provider, transcript_file)
+		chapters_text = download_textfile_as_string_gcs(gc_provider, chapters_file)
+
+		chapterized_transcript = split_transcript_into_chapters(json.loads(transcript_text), json.loads(chapters_text))
+
+		upload_string_as_textfile_gcs(gc_provider, chapterized_file, json.dumps(chapterized_transcript))
+
 def main():
 	gc_provider = GoogleClientProvider()
-	for podcast_name, config in podcast_configs.items():
-		assembly_transcripts_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, ASSEMBLY_AI_FOLDER)
-		assembly_transcript_files = list_files_gcs(gc_provider, assembly_transcripts_folder, JSON_EXT)
-		audio_folder = os.path.join(podcast_name, AUDIO_DATA_FOLDER)
-
-		create_temp_local_directory(assembly_transcripts_folder)
-		create_temp_local_directory(audio_folder)
-
-		for transcript_file in assembly_transcript_files:
-			print(transcript_file)
-			chapters_filename = os.path.basename(transcript_file)[:-(len(JSON_EXT) + 1)] + "_{}.{}".format(CHAPTERS_SUFFIX, JSON_EXT)
-			chapters_file = os.path.join(audio_folder, chapters_filename)
-
-			if file_exists_gcs(gc_provider, chapters_file):
-				download_file_gcs(gc_provider, chapters_file)
-			else:
-				continue
-
-			download_file_gcs(gc_provider, transcript_file)
-
-			transcript = open(transcript_file, "r")
-			chapters = open(chapters_file, "r")
-
-			chapter_transcripts = split_transcript_into_chapters(json.load(transcript), json.load(chapters))
-
-			transcript.close()
-			chapters.close()
-
-			for title, chapter_text in chapter_transcripts.items():
-				print("************************")
-				print(title)
-				print("************************")
-				print(chapter_text)
-
-			break
-
-		delete_temp_local_directory(podcast_name)
-
+	for podcast_name in podcast_configs.keys():
+		print("Running chapterization for {}".format(podcast_name))
+		chapterize_all_transcripts(gc_provider, podcast_name)
 
 if __name__ == "__main__":
     main()
