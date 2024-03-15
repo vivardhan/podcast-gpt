@@ -69,13 +69,17 @@ To download all audio files for the supported podcasts and upload them to GCS, r
 ```bash
 bazel run //data_api:download_audio_files
 ```
+Note that this process also parses the description of each podcast episode to discover chapters within the episode. If chapters are found, the timestamps and chapter titles are also saved to GCS.
 
 ### 2.2 Transcribing audio
 To transcribe audio files that have been put in GCS, run the following:
 ```bash
 bazel run //data_api:transcribe_audio_files
 ```
-This will create 2 sets of transcriptions, one without speaker identifiers and one with speaker identifiers. Both transcripts will be uploaded to GCS.
+This will create 3 sets of transcriptions, all of which are uploaded to GCS:
+1. without speaker identifiers,
+2. with speaker identifiers,
+3. raw json output from assembly AI
 
 ### 2.3 Accessing transcripts
 Run the following to see how many words are in all the raw transcripts for each podcast:
@@ -84,10 +88,18 @@ bazel run //data_api:transcript_stats
 ```
 This binary (see `data_api/transcript_inspector/main.py`) also shows how to access the contents of transcripts.
 
+### 2.5 Chapterize transcripts
+This allows creation of transcripts for each chapter using the outputs obtained from sections 2.1 and 2.2. Since these transcripts are shorter and focussed on a specific topic, they are better suited for two purposes:
+1. Generating embeddings for the purpose of RAG using a vector DB
+2. Generating QA pairs for training and evaluation (section 2.5)
+Run the following binary to chapterize transcripts and save them to GCS:
+```bash
+bazel run //data_api:chapterize_transcripts
+```
+
 ### 2.4 Using LLMs to generate question/answer data
-Here, we wish to generate question/answer pairs for the purpose of finetuning our Podcast GPT model as well as for evaluation purposes. The technique to do this automatically, is to provide transcripts of podcast episodes to existing LLMs in the form of a prompt that asks the LLM to convert the transcript into a list of question and answer pairs. These question and answer pairs will be saved to GCS for further use in training and evaluation.
+Here, we wish to generate question/answer pairs for the purpose of finetuning our Podcast GPT model as well as for evaluation purposes. The technique to do this automatically, is to provide chapterized transcripts of podcast episodes to existing LLMs in the form of a prompt that asks the LLM to convert the chapterized transcript into a list of question and answer pairs. These question and answer pairs will be saved to GCS for further use in training and evaluation.
 Run the following binary (still WIP) to obtain the question/answer pairs:
 ```bash
 bazel run //data_api:generate_qa_data
 ```
-
