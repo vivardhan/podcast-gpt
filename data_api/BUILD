@@ -76,6 +76,18 @@ py_binary(
 )
 
 py_binary(
+	name="modify_speaker_labels_huberman",
+	srcs=[
+		"speech_to_text/huberman_speakers_modifier.py",
+	],
+	main="speech_to_text/huberman_speakers_modifier.py",
+	deps=[
+		"//:configs",
+		":utils",
+	],
+)
+
+py_binary(
 	name="chapterize_transcripts",
 	srcs=[
 		"qa_generator/transcript_chapterizer.py",
