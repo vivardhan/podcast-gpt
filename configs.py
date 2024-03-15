@@ -13,6 +13,7 @@ QA_PAIRS_FOLDER = "qa_pairs"
 TXT_EXT = "txt"
 JSON_EXT = "json"
 CHAPTERS_SUFFIX = "chapters"
+CHAPTERIZED_DATA_FOLDER = "chapterized_data"
 
 @dataclass
 class YoutubeFeedConfig:
