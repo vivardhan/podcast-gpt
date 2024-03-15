@@ -7,7 +7,6 @@ from urllib.request import urlretrieve
 
 # Third Party Imports
 import feedparser
-from lxml.html import fragments_fromstring, HtmlElement
 
 # Package Imports
 from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
@@ -30,50 +29,38 @@ class RSSAudioDownloader(AudioDownloader):
 			upload_to_gcs(self.gc_provider, stream.audio_path)
 
 	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
-		fragments = fragments_fromstring(description)
+		# See https://stackoverflow.com/questions/8318236/regex-pattern-for-hhmmss-time-string
+		# timestamp_pattern = '?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d'
 
-		# Search for the element with the list of chapters
-		for index, fragment in enumerate(fragments):
-			# This is specific to 'The Drive' Podcast
-			if (type(fragment) != HtmlElement):
-				continue
+		# The pattern is expected to be a list of <li> </li> tags, with the contained text as follows:
+		# "chapter title [hh:mm:ss]"
+		# There are some exceptions to this, which are accounted for i.e.:
+		# 1. The opening <li> tag might have some additional attributes
+		# 2. The square brackets around the timestamp may be parentheses instead
+		# 3. There may be some additional text within the brackets containing the timestamp (before or after hh:mm:ss)
+		# 4. The timestamp may be truncated, eg. 1:45 or 3:24;17 or 00:1:30 - see the comment above for the pattern
+		pattern = '(\<li.*?\>)(.*?[\[|\(].*?)(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)(.*?[\]|\)].*?\<\/li\>)'
+		matches = re.findall(pattern, description)
 
-			# This is specific to 'The Drive' Podcast
-			if fragment.tag == 'ul':
-				chapters_list = [
-					item.text_content() 
-					for item in fragment.getchildren()
-				]
+		chapters = []
+		for m in matches:
+			timestamp = m[4] # seconds
+			if not m[3] == '':
+				timestamp = m[3] + ':' + timestamp
 
-				# Look for a text description followed by a timestamp in brackets [] and a semicolon
-				pattern = '(.*?\[)(.*?];)'
-				chapters = []
-				for c in chapters_list:
-					matches = re.findall(pattern, c)
+			if not m[2] == '':
+				timestamp = m[2] + ':' + timestamp
 
-					# If there is no pattern match, don't use this chapter
-					if len(matches) == 0:
-						continue
+			chapters.append(
+				(
+					timestamp,
+					# The description is the 1st group
+					# Remove the open bracket and strip whitespace
+					m[1][:-1].strip(),
+				)
+			)
 
-					# If there is a pattern match, there is only one match expected
-					match = matches[0]
-
-					chapters.append(
-						(
-							# The timestamp is the 2nd group 
-							# Discard the closing bracket and semicolon
-							match[1][:-2],
-							# The description is the 1st group
-							# Discard the open bracket and strip any whitespace
-							match[0][:-1].strip()
-						)
-					)
-
-				return chapters
-
-		return None
-
-
+		return chapters
 
 	def find_audios_to_download(self, config: RSSFeedConfig) -> List[DownloadStream]:
 		files_to_download = []
@@ -89,7 +76,7 @@ class RSSAudioDownloader(AudioDownloader):
 					file_name = "{}.{}".format(title, config.audio_extension)
 					
 					if any([f in file_name for f in config.filter_out]):
-						continue
+						break
 
 					if chapters:
 						files_to_download.append(
