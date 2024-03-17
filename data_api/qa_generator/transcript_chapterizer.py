@@ -280,8 +280,8 @@ def chapterize_all_transcripts(gc_provider: GoogleClientProvider, podcast_name: 
 	for transcript_file in assembly_transcript_files:
 		transcript_title = os.path.basename(transcript_file)
 		chapterized_file = os.path.join(chapterized_data_folder, transcript_title)
-		# if file_exists_gcs(gc_provider, chapterized_file):
-		# 	continue
+		if file_exists_gcs(gc_provider, chapterized_file):
+			continue
 
 		chapters_filename = transcript_title[:-(len(JSON_EXT) + 1)] + "_{}.{}".format(CHAPTERS_SUFFIX, JSON_EXT)
 		chapters_file = os.path.join(audio_folder, chapters_filename)
