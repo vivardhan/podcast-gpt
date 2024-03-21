@@ -54,7 +54,7 @@ For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu
 5. At the top, choose 'KEYS'
 6. Click on 'ADD KEY' > Create new key
 7. Choose 'JSON' and click on 'CREATE'. A file with a private key will be downloaded to your computer. 
-8. Put the downloaded file in [repo_root]/assets and name it 'compute_engine_key.json'
+8. Put the downloaded file in [repo_root]/credentials and name it 'compute_engine_key.json'
 
 ### 1.2 Future Setup
 
