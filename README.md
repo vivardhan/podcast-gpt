@@ -46,6 +46,15 @@ brew install bazel
 
 For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu#install-on-ubuntu).
 
+#### 1.1.5 Obtain GCP Credentials
+1. Go to console.cloud.google.com
+2. Click on the menu button in the top left corner (3 horizontal lines)
+3. Mouse over IAM and admin, then click on 'Service accounts' in the menu that opens on the right
+4. Click on the link under email corresponding to the service account named 'Compute Engine default service account'
+5. At the top, choose 'KEYS'
+6. Click on 'ADD KEY' > Create new key
+7. Choose 'JSON' and click on 'CREATE'. A file with a private key will be downloaded to your computer. 
+8. Put the downloaded file in [repo_root]/assets and name it 'compute_engine_key.json'
 
 ### 1.2 Future Setup
 
