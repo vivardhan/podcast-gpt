@@ -55,6 +55,7 @@ py_binary(
 	srcs=[
 		"qa_generator/llm_qa_generator.py",
 		"qa_generator/main.py",
+		"qa_generator/gpt4.py",
 	],
 	main="qa_generator/main.py",
 	deps=[
