@@ -16,6 +16,6 @@ def obtain_google_oauth_credentials(scopes: List[str]) -> google.oauth2.credenti
     returns:
         A credentials object that can be used to authenticate clients
     """
-    SERVICE_ACCOUNT_FILE = os.path.join("assets", "compute_engine_key.json")
+    SERVICE_ACCOUNT_FILE = os.path.join("credentials", "compute_engine_key.json")
     return service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=scopes)
