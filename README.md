@@ -47,9 +47,9 @@ brew install bazel
 For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu#install-on-ubuntu).
 
 #### 1.1.5 Obtain GCP Credentials
-1. Go to console.cloud.google.com
+1. Go to [Google Cloud Console](console.cloud.google.com) and make sure the 'podcast-gpt' project is selected in the drop down at the top.
 2. Click on the menu button in the top left corner (3 horizontal lines)
-3. Mouse over IAM and admin, then click on 'Service accounts' in the menu that opens on the right
+3. Mouse over 'IAM and admin', then click on 'Service accounts' in the menu that opens on the right
 4. Click on the link under email corresponding to the service account named 'Compute Engine default service account'
 5. At the top, choose 'KEYS'
 6. Click on 'ADD KEY' > Create new key
