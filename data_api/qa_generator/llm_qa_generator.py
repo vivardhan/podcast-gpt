@@ -1,6 +1,6 @@
 # System Imports
 import abc
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 class LLMQAGenerator(metaclass=abc.ABCMeta):
 	"""
@@ -14,7 +14,7 @@ class LLMQAGenerator(metaclass=abc.ABCMeta):
 		# eg. inference settings can be initialized here
 
 	@abc.abstractmethod
-	def load_llm(self, model_name: str) -> Any:
+	def load_llm(self, model_name: str) -> any:
 		"""
 		Loads the LLM and returns it
 
