@@ -56,16 +56,25 @@ py_library(
 	],
 )
 
+py_library(
+	name="podcast_data",
+	srcs=[
+		"podcasts.py",
+	],
+	deps=[
+		":download_audio_files",
+		":transcribe_audio_files",
+		":chapterize_transcripts",
+	],
+)
+
 py_binary(
 	name="main",
 	srcs=[
 		"main.py",
-		"podcasts.py",
 	],
 	deps=[
-		"//:download_audio_files",
-		"//:transcribe_audio_files",
-		"//:chapterize_transcripts",
+		":podcast_data",
 	]
 )
 
@@ -73,14 +82,11 @@ py_binary(
 	name="transcript_stats",
 	srcs=[
 		"data_api/transcript_inspector/main.py",
-		"podcasts.py",
 	],
 	main="data_api/transcript_inspector/main.py",
 	deps=[
-		"//:utils",
-		"//:download_audio_files",
-		"//:transcribe_audio_files",
-		"//:chapterize_transcripts",
+		":utils",
+		":podcast_data",
 	],
 )
 
@@ -94,6 +100,7 @@ py_binary(
 	main="data_api/qa_generator/main.py",
 	deps=[
 		":utils",
+		":podcast_data",
 	],
 )
 

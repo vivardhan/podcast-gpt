@@ -104,3 +104,10 @@ class Paths:
 			cls.get_audio_data_folder(podcast_name), 
 			cls.get_chapters_file_name_for_title(title)
 		)
+
+	@classmethod
+	def get_qa_pairs_folder(cls, podcast_name) -> str:
+		return os.path.join(
+			cls.get_text_data_folder(podcast_name),
+			cls.QA_PAIRS_FOLDER,
+		)

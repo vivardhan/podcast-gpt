@@ -11,7 +11,9 @@ from data_api.utils.gcs_utils import (
 from data_api.utils.paths import Paths
 from data_api.qa_generator.llm_qa_generator import LLMQAGenerator
 from data_api.qa_generator.gpt4 import GPT4QAGenerator
+from data_api.utils.paths import Paths
 from google_client_provider import GoogleClientProvider
+from podcasts import PODCASTS
 
 
 # Specify a mapping between model names to concrete implementations of LLMQAGenerator subclesses here:
@@ -26,10 +28,10 @@ def main():
 	# Uncomment the following once qa_generator_models above is setup
 	for model_name, model_class in qa_generator_models.items():
 		model = model_class(model_name)
-		for podcast_name, config in podcast_configs.items():
-			chapterized_transcript_prefix = os.path.join(podcast_name, TEXT_DATA_FOLDER, CHAPTERIZED_DATA_FOLDER)
-			qa_pairs_prefix = os.path.join(podcast_name, TEXT_DATA_FOLDER, QA_PAIRS_FOLDER)
-			chapterized_files = list_files_gcs(gc_provider, chapterized_transcript_prefix, JSON_EXT)
+		for podcast in PODCASTS:
+			chapterized_data_folder = Paths.get_chapterized_data_folder(podcast.name)
+			qa_pairs_folder = Paths.get_qa_pairs_folder(podcast.name)
+			chapterized_files = list_files_gcs(gc_provider, chapterized_data_folder, Paths.JSON_EXT)
 			for t in chapterized_files:
 				text = download_textfile_as_string_gcs(gc_provider, t)
 				chapters_json = json.loads(text)
