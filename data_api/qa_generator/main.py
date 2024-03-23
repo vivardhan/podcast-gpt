@@ -3,22 +3,16 @@ import json
 import os
 
 # Package Imports
-from configs import (
-	podcast_configs, 
-	CHAPTERIZED_DATA_FOLDER,
-	JSON_EXT,
-	TEXT_DATA_FOLDER,
-	TXT_EXT,
-	QA_PAIRS_FOLDER,
-)
 from data_api.utils.gcs_utils import (
 	download_textfile_as_string_gcs,
     list_files_gcs,
     upload_string_as_textfile_gcs,
 )
-from google_client_provider import GoogleClientProvider
+from data_api.utils.paths import Paths
 from data_api.qa_generator.llm_qa_generator import LLMQAGenerator
 from data_api.qa_generator.gpt4 import GPT4QAGenerator
+from google_client_provider import GoogleClientProvider
+
 
 # Specify a mapping between model names to concrete implementations of LLMQAGenerator subclesses here:
 qa_generator_models = {

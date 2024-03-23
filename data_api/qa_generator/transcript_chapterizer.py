@@ -6,16 +6,6 @@ import os
 from typing import Dict, List
 
 # Package Imports
-from configs import (
-	ASSEMBLY_AI_FOLDER,
-	AUDIO_DATA_FOLDER,
-	CHAPTERIZED_DATA_FOLDER,
-	CHAPTERS_SUFFIX,
-	JSON_EXT,
-	podcast_configs,
-	TEXT_DATA_FOLDER,
-	TXT_EXT,
-)
 from google_client_provider import GoogleClientProvider
 from data_api.utils.gcs_utils import (
 	download_textfile_as_string_gcs,
@@ -23,6 +13,7 @@ from data_api.utils.gcs_utils import (
 	list_files_gcs,
 	upload_string_as_textfile_gcs,
 )
+from data_api.utils.paths import Paths
 
 SENTENCE_END_PUNCTUATIONS = ['.', '?', '!']
 
@@ -205,106 +196,89 @@ def convert_timestamp_string_to_milliseconds(timestamp_string: str) -> int:
 
 	return milliseconds
 
+class TranscriptChapterizer:
 
-def split_transcript_into_chapters(assembly_ai_transcript: json, chapters: json) -> Dict[str, str]:
-	"""
-	Given a transcript and chapter timestamps and titles, returns a list of chapter transcripts
-	
-	params:
-		assembly_ai_transcript: The raw transcript from assembly AI in json format
-		chapters: json formated list of (timestamp, title) pairs describing chapters
+	def __init__(self, gc_provider: GoogleClientProvider, podcast_name: str):
+		self.gc_provider = gc_provider
+		self.podcast_name = podcast_name
 
-	returns:
-		Dictionary that maps chapter titles to transcript text for the chapter
-
-	"""
-	chapter_transcripts = {}
-	words_list = assembly_ai_transcript["words"]
-	num_speakers = count_num_speakers(words_list)
-	transcript_break_boundaries = determine_break_boundaries(words_list, num_speakers)
-
-	curr_index = 0
-	for index, c in enumerate(chapters):
-		start_time_str = c[0]
-		title = c[1]
-
-		start_time_ms = convert_timestamp_string_to_milliseconds(start_time_str)
-		start_boundary_index = bisect(transcript_break_boundaries, start_time_ms, lo=curr_index, key=lambda elem : elem.timestamp)
-		start_elem = transcript_break_boundaries[max(0, start_boundary_index - 1)]
-
-		if index < len(chapters) - 1:
-			end_time_ms = convert_timestamp_string_to_milliseconds(chapters[index + 1][0])
-			end_boundary_index = bisect(transcript_break_boundaries, end_time_ms, lo=start_boundary_index, key=lambda elem : elem.timestamp)
-		else:
-			end_boundary_index = len(transcript_break_boundaries) - 1
-
-		end_elem = transcript_break_boundaries[end_boundary_index] if end_boundary_index < len(transcript_break_boundaries) else transcript_break_boundaries[-1]
-
-		chapter_transcripts[title] = construct_chapter_text(words_list, start_elem.index, end_elem.index, num_speakers)
-		curr_index = end_boundary_index
-
-	return chapter_transcripts
-
-
-def chapterize_all_transcripts(gc_provider: GoogleClientProvider, podcast_name: str) -> None:
-	"""
-	Creates transcripts for each chapter in each transcript for a given podcast
-
-	params:
-		gc_provider:
-			The google client provider for GCS access
-		podcast name:
-			The name of the podcast
-
-	returns:
-		None
+	def _split_transcript_into_chapters(self, assembly_ai_transcript: json, chapters: json) -> Dict[str, str]:
+		"""
+		Given a transcript and chapter timestamps and titles, returns a list of chapter transcripts
 		
-		The resulting chapterized transcripts are saved to gcs, one file per podcast episode
-		A dictionary mapping the podcast episode title to chapter headings and their transcripts, i.e.
+		params:
+			assembly_ai_transcript: The raw transcript from assembly AI in json format
+			chapters: json formated list of (timestamp, title) pairs describing chapters
 
-		filename: "episode_1.json", contents:
-		{
-			"chapter_1": {"transcript_1 - hi, welcome"},
-			"chapter_2": {"topic_1 - bla bla"},
-				...
-		}
+		returns:
+			Dictionary that maps chapter titles to transcript text for the chapter
+
+		"""
+		chapter_transcripts = {}
+		words_list = assembly_ai_transcript["words"]
+		num_speakers = count_num_speakers(words_list)
+		transcript_break_boundaries = determine_break_boundaries(words_list, num_speakers)
+
+		curr_index = 0
+		for index, c in enumerate(chapters):
+			start_time_str = c[0]
+			title = c[1]
+
+			start_time_ms = convert_timestamp_string_to_milliseconds(start_time_str)
+			start_boundary_index = bisect(transcript_break_boundaries, start_time_ms, lo=curr_index, key=lambda elem : elem.timestamp)
+			start_elem = transcript_break_boundaries[max(0, start_boundary_index - 1)]
+
+			if index < len(chapters) - 1:
+				end_time_ms = convert_timestamp_string_to_milliseconds(chapters[index + 1][0])
+				end_boundary_index = bisect(transcript_break_boundaries, end_time_ms, lo=start_boundary_index, key=lambda elem : elem.timestamp)
+			else:
+				end_boundary_index = len(transcript_break_boundaries) - 1
+
+			end_elem = transcript_break_boundaries[end_boundary_index] if end_boundary_index < len(transcript_break_boundaries) else transcript_break_boundaries[-1]
+
+			chapter_transcripts[title] = construct_chapter_text(words_list, start_elem.index, end_elem.index, num_speakers)
+			curr_index = end_boundary_index
+
+		return chapter_transcripts
 
 
-	"""
-	assembly_transcripts_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, ASSEMBLY_AI_FOLDER)
-	assembly_transcript_files = list_files_gcs(gc_provider, assembly_transcripts_folder, JSON_EXT)
-	audio_folder = os.path.join(podcast_name, AUDIO_DATA_FOLDER)
+	def chapterize_all_transcripts(self, titles: List[str]) -> None:
+		"""
+		Creates transcripts for each chapter in each transcript for a list of episode titles
 
-	chapterized_data_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, CHAPTERIZED_DATA_FOLDER)
+		params:
+			titles:
+				A list of episode titles
 
-	for transcript_file in assembly_transcript_files:
-		transcript_title = os.path.basename(transcript_file)
-		chapterized_file = os.path.join(chapterized_data_folder, transcript_title)
-		if file_exists_gcs(gc_provider, chapterized_file):
-			continue
+		returns:
+			None
+			
+			The resulting chapterized transcripts are saved to gcs, one file per podcast episode
+			A dictionary mapping the podcast episode title to chapter headings and their transcripts, i.e.
 
-		chapters_filename = transcript_title[:-(len(JSON_EXT) + 1)] + "_{}.{}".format(CHAPTERS_SUFFIX, JSON_EXT)
-		chapters_file = os.path.join(audio_folder, chapters_filename)
+			filename: "episode_1.json", contents:
+			{
+				"chapter_1": {"transcript_1 - hi, welcome"},
+				"chapter_2": {"topic_1 - bla bla"},
+					...
+			}
 
-		if not file_exists_gcs(gc_provider, chapters_file):
-			continue
 
-		print("Chapterizing: {}".format(transcript_title))
+		"""
+		print("Running chapterization for {}".format(self.podcast_name))
+		for title in titles:
+			chapterized_file = Paths.get_chapterized_transcript_path(self.podcast_name, title)
+			if file_exists_gcs(self.gc_provider, chapterized_file):
+				continue
 
-		transcript_text = download_textfile_as_string_gcs(gc_provider, transcript_file)
-		chapters_text = download_textfile_as_string_gcs(gc_provider, chapters_file)
+			chapters_file = Paths.get_chapters_file_path(self.podcast_name, title)
+			if not file_exists_gcs(self.gc_provider, chapters_file):
+				continue
 
-		chapterized_transcript = split_transcript_into_chapters(json.loads(transcript_text), json.loads(chapters_text))
+			print("Chapterizing: {}".format(title))
+			transcript_text = download_textfile_as_string_gcs(self.gc_provider, Paths.get_aai_transcript_path(self.podcast_name, title))
+			chapters_text = download_textfile_as_string_gcs(self.gc_provider, chapters_file)
 
-		upload_string_as_textfile_gcs(gc_provider, chapterized_file, json.dumps(chapterized_transcript))
-
-def main():
-	gc_provider = GoogleClientProvider()
-	for podcast_name in podcast_configs.keys():
-		print("Running chapterization for {}".format(podcast_name))
-		chapterize_all_transcripts(gc_provider, podcast_name)
-
-if __name__ == "__main__":
-    main()
-
+			chapterized_transcript = self._split_transcript_into_chapters(json.loads(transcript_text), json.loads(chapters_text))
+			upload_string_as_textfile_gcs(self.gc_provider, chapterized_file, json.dumps(chapterized_transcript))
 

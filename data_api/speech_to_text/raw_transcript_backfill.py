@@ -9,15 +9,6 @@ from typing import Dict
 import assemblyai as aai
 
 # Package Imports
-from configs import (
-    ASSEMBLY_AI_FOLDER,
-    JSON_EXT, 
-    podcast_configs, 
-    RAW_TRANSCRIPT_FOLDER,
-    TEXT_DATA_FOLDER,
-    TXT_EXT,
-)
-
 from data_api.utils.file_utils import create_temp_local_directory
 from data_api.utils.gcs_utils import (
     download_file_gcs,
@@ -25,6 +16,7 @@ from data_api.utils.gcs_utils import (
     list_files_gcs, 
     upload_string_as_textfile_gcs,
 )
+from data_api.utils.paths import Paths
 from google_client_provider import GoogleClientProvider
 
 base_url = "https://api.assemblyai.com/v2/transcript/"
@@ -35,11 +27,11 @@ headers = {'authorization': aai.settings.api_key}
 
 def download_all_raw_transcript_texts(gc_provider: GoogleClientProvider) -> Dict[str, str]:
     ret = {}
-    for podcast_name, config in podcast_configs.items():
+    for podcast_name in ["hubermanlab", "PeterAttiaMD"]:
         print("Downloading all raw transcripts from gcs for {}".format(podcast_name))
-        raw_text_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, RAW_TRANSCRIPT_FOLDER)
+        raw_text_folder = os.path.join(podcast_name, Paths.TEXT_DATA_FOLDER, Paths.RAW_TRANSCRIPT_FOLDER)
         create_temp_local_directory(raw_text_folder)
-        for file_name in list_files_gcs(gc_provider, raw_text_folder, TXT_EXT):
+        for file_name in list_files_gcs(gc_provider, raw_text_folder, Paths.TXT_EXT):
             if not os.path.exists(file_name):
                 download_file_gcs(gc_provider, file_name)
             
@@ -49,7 +41,7 @@ def download_all_raw_transcript_texts(gc_provider: GoogleClientProvider) -> Dict
                     curr_text += line.rstrip() + " "
 
                 ret[file_name] = curr_text.rstrip()
-
+                
     return ret
 
 def get_aai_transcript(aai_transcript_id: str) -> str:
@@ -78,7 +70,7 @@ def match_aai_transcript_to_gcs_transcript(aai_transcript_text: str, gcs_transcr
     return None
 
 def save_assembly_ai_transcript(gc_provider: GoogleClientProvider, transcript: json, file_name: str) -> None:
-    transcript_file_name = file_name.replace(RAW_TRANSCRIPT_FOLDER, ASSEMBLY_AI_FOLDER).replace(TXT_EXT, JSON_EXT)
+    transcript_file_name = file_name.replace(Paths.RAW_TRANSCRIPT_FOLDER, Paths.ASSEMBLY_AI_FOLDER).replace(Paths.TXT_EXT, Paths.JSON_EXT)
     if file_exists_gcs(gc_provider, transcript_file_name):
         print("File already exists, skipping!")
         return

@@ -3,12 +3,6 @@ import json
 import os
 
 # Package Imports
-from configs import (
-    ASSEMBLY_AI_FOLDER,
-    JSON_EXT,
-    TEXT_DATA_FOLDER,
-)
-
 from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
 from data_api.utils.gcs_utils import (
     download_file_gcs,
@@ -17,6 +11,7 @@ from data_api.utils.gcs_utils import (
     upload_string_as_textfile_gcs,
 )
 from google_client_provider import GoogleClientProvider
+from data_api.utils.paths import Paths
 
 def read_transcript(transcript_path: str) -> json:
     with open(transcript_path) as f:
@@ -45,7 +40,7 @@ def process_aai_transcript(gc_provider: GoogleClientProvider, transcript_path: s
         return
 
 def process_all_transcripts(gc_provider: GoogleClientProvider, podcast_name: str) -> None:
-    aai_folder = os.path.join(podcast_name, TEXT_DATA_FOLDER, ASSEMBLY_AI_FOLDER)
+    aai_folder = Paths.get_aai_transcript_folder(podcast_name)
     create_temp_local_directory(aai_folder)
 
     aai_transcript_files = list_files_gcs(gc_provider, aai_folder, JSON_EXT)

@@ -1,19 +1,6 @@
 # System Imports
 from dataclasses import dataclass
-import os
-from typing import List
-
-# Folder paths
-AUDIO_DATA_FOLDER = "audio_data"
-TEXT_DATA_FOLDER = "text_data"
-ASSEMBLY_AI_FOLDER = "assembly_ai_transcripts"
-RAW_TRANSCRIPT_FOLDER = "raw_transcripts"
-SPEAKER_TRANSCRIPT_FOLDER = "speaker_transcripts"
-QA_PAIRS_FOLDER = "qa_pairs"
-TXT_EXT = "txt"
-JSON_EXT = "json"
-CHAPTERS_SUFFIX = "chapters"
-CHAPTERIZED_DATA_FOLDER = "chapterized_data"
+from typing import List, Union
 
 @dataclass
 class YoutubeFeedConfig:
@@ -33,6 +20,10 @@ class YoutubeFeedConfig:
     # Audio extension for downloaded audio files
     audio_extension: str
 
+hubermanlab_config = YoutubeFeedConfig(
+    channel_id="UC2D2CMWXMOVWx7giW1n3LIg",
+    audio_extension="mp4",
+)
 
 @dataclass
 class RSSFeedConfig:
@@ -47,16 +38,8 @@ class RSSFeedConfig:
     # A list of strings to prevent certain file names from being downloaded
     filter_out: List[str]
 
-
-# All configs
-podcast_configs = {
-    "hubermanlab": YoutubeFeedConfig(
-        channel_id="UC2D2CMWXMOVWx7giW1n3LIg",
-        audio_extension="mp4",
-    ),
-    "PeterAttiaMD": RSSFeedConfig(
-        url="https://peterattiadrive.libsyn.com/rss",
-        audio_extension="mp3",
-        filter_out=["rebroadcast", "Rebroadcast", "re-release", "Qualy"],
-    ),
-}
+peterattia_config = RSSFeedConfig(
+    url="https://peterattiadrive.libsyn.com/rss",
+    audio_extension="mp3",
+    filter_out=["rebroadcast", "Rebroadcast", "re-release", "Qualy"],
+)

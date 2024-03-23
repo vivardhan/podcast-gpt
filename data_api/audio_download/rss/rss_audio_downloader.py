@@ -10,7 +10,7 @@ import feedparser
 
 # Package Imports
 from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
-from configs import RSSFeedConfig
+from data_api.audio_download.factory import RSSFeedConfig
 from data_api.utils.gcs_utils import (
 	file_exists_gcs, 
 	upload_string_as_textfile_gcs, 
@@ -62,20 +62,20 @@ class RSSAudioDownloader(AudioDownloader):
 
 		return chapters
 
-	def find_audios_to_download(self, config: RSSFeedConfig) -> List[DownloadStream]:
+	def find_audios_to_download(self) -> List[DownloadStream]:
 		files_to_download = []
 
-		feed = feedparser.parse(config.url)
+		feed = feedparser.parse(self.config.url)
 		print("Checking {} RSS entries ... ".format(len(feed.entries)))
 
 		for entry in feed.entries:
 			chapters = self.extract_chapters(entry.content[0].value)
 			for link in entry.links:
-				if config.audio_extension in link.href:
+				if self.config.audio_extension in link.href:
 					title = entry.title.replace('/', '')
-					file_name = "{}.{}".format(title, config.audio_extension)
+					file_name = "{}.{}".format(title, self.config.audio_extension)
 					
-					if any([f in file_name for f in config.filter_out]):
+					if any([f in file_name for f in self.config.filter_out]):
 						break
 
 					if chapters:

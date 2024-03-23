@@ -9,7 +9,7 @@ from pytube import Stream, YouTube
 
 # Package imports
 from data_api.audio_download.audio_downloader import AudioDownloader, DownloadStream
-from configs import YoutubeFeedConfig
+from data_api.audio_download.factory import YoutubeFeedConfig
 from data_api.utils.gcs_utils import (
 	file_exists_gcs, 
 	upload_string_as_textfile_gcs,
@@ -20,8 +20,6 @@ from data_api.audio_download.youtube.video_lister import get_all_videos
 YOUTUBE_PREFIX = "https://www.youtube.com/watch?v="
 
 class YoutubeAudioDownloader(AudioDownloader):
-
-
 	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
 		if not file_exists_gcs(self.gc_provider, stream.chapters_path):
 			upload_string_as_textfile_gcs(self.gc_provider, stream.chapters_path, json.dumps(stream.chapters))
@@ -58,13 +56,13 @@ class YoutubeAudioDownloader(AudioDownloader):
 		# Strip away the new line and space characters
 		return [(c[0].strip(), c[1].strip()) for c in chapters]
 
-	def find_audios_to_download(self, config: YoutubeFeedConfig) -> List[DownloadStream]:
-		videos = get_all_videos(self.gc_provider, config.channel_id)
+	def find_audios_to_download(self) -> List[DownloadStream]:
+		videos = get_all_videos(self.gc_provider, self.config.channel_id)
 
 		files_to_download = []
 		for item in videos:
 			file_name = item["snippet"]["title"].replace('/', '')
-			downloaded_name = "{}.{}".format(file_name, config.audio_extension)
+			downloaded_name = "{}.{}".format(file_name, self.config.audio_extension)
 
 			chapters = self.extract_chapters(item["snippet"]["description"])
 

@@ -1,6 +1,5 @@
 py_library(
 	name="google_utils",
-	visibility = ["//visibility:public"],
 	srcs=[
 		"google_oauth_credentials.py",
 		"google_client_provider.py",
@@ -11,9 +10,111 @@ py_library(
 )
 
 py_library(
-	name="configs",
-	visibility = ["//visibility:public"],
+	name="utils",
 	srcs=[
-		"configs.py",
+		"data_api/utils/paths.py",
+		"data_api/utils/file_utils.py",
+		"data_api/utils/gcs_utils.py",
+	],
+	deps=[
+		"//:google_utils",
+	]
+)
+
+py_library(
+	name="download_audio_files",
+	srcs=[
+		"data_api/audio_download/audio_downloader.py",
+		"data_api/audio_download/factory.py",
+		"data_api/audio_download/feed_config.py",
+		"data_api/audio_download/rss/rss_audio_downloader.py",
+		"data_api/audio_download/youtube/youtube_audio_downloader.py",
+		"data_api/audio_download/youtube/video_lister.py",
+	],
+	deps=[
+		":utils",
+	],
+)
+
+py_library(
+	name="transcribe_audio_files",
+	srcs=[
+		"data_api/speech_to_text/assembly_ai_transcriber.py"
+	],
+	deps=[
+		":utils",
+	],
+)
+
+py_library(
+	name="chapterize_transcripts",
+	srcs=[
+		"data_api/qa_generator/transcript_chapterizer.py",
+	],
+	deps=[
+		":utils",
+	],
+)
+
+py_binary(
+	name="main",
+	srcs=[
+		"main.py",
+		"podcasts.py",
+	],
+	deps=[
+		"//:download_audio_files",
+		"//:transcribe_audio_files",
+		"//:chapterize_transcripts",
+	]
+)
+
+py_binary(
+	name="transcript_stats",
+	srcs=[
+		"data_api/transcript_inspector/main.py",
+		"podcasts.py",
+	],
+	main="data_api/transcript_inspector/main.py",
+	deps=[
+		"//:utils",
+		"//:download_audio_files",
+		"//:transcribe_audio_files",
+		"//:chapterize_transcripts",
+	],
+)
+
+py_binary(
+	name="generate_qa_data",
+	srcs=[
+		"data_api/qa_generator/llm_qa_generator.py",
+		"data_api/qa_generator/main.py",
+		"data_api/qa_generator/gpt4.py",
+	],
+	main="data_api/qa_generator/main.py",
+	deps=[
+		":utils",
+	],
+)
+
+py_binary(
+	name="backfill_raw_transcripts",
+	srcs=[
+		"data_api/speech_to_text/raw_transcript_backfill.py",
+	],
+	main="data_api/speech_to_text/raw_transcript_backfill.py",
+	deps=[
+		":utils",
+	],
+)
+
+py_binary(
+	name="modify_speaker_labels_huberman",
+	srcs=[
+		"data_api/speech_to_text/huberman_speakers_modifier.py",
+	],
+	main="data_api/speech_to_text/huberman_speakers_modifier.py",
+	deps=[
+		":utils",
 	],
 )

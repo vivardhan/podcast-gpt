@@ -6,16 +6,13 @@ import os
 from typing import List, Tuple, Union
 
 # Package Imports
-from configs import (
-	AUDIO_DATA_FOLDER,
-	CHAPTERS_SUFFIX, 
-	JSON_EXT,
-	RSSFeedConfig,
+from data_api.audio_download.feed_config import (
+	RSSFeedConfig, 
 	YoutubeFeedConfig,
 )
 from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
+from data_api.utils.paths import Paths
 from google_client_provider import GoogleClientProvider
-
 
 @dataclass
 class DownloadStream:
@@ -54,17 +51,17 @@ class DownloadStream:
 	def __post_init__(self):
 		self.audio_path = os.path.join(self.folder_path, self.downloaded_name)
 		dot_pos = self.downloaded_name.rfind('.')
-		file_name = self.downloaded_name[:dot_pos]
-		chapters_file = "{}_{}.{}".format(file_name, CHAPTERS_SUFFIX, JSON_EXT)
+		title = self.downloaded_name[:dot_pos]
+		chapters_file = Paths.get_chapters_file_name_for_title(title)
 		self.chapters_path = os.path.join(self.folder_path, chapters_file)
 		self.extension = self.downloaded_name[dot_pos + 1:]
 
 
 # Abstract class for AudioDownloaders
 class AudioDownloader(metaclass=abc.ABCMeta):
-	def __init__(self, name: str, google_client_provider: GoogleClientProvider):
-		self.name = name
-		self.audio_folder = os.path.join(self.name, AUDIO_DATA_FOLDER)
+	def __init__(self, name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig], google_client_provider: GoogleClientProvider):
+		self.config = config
+		self.audio_folder = os.path.join(name, Paths.AUDIO_DATA_FOLDER)
 		self.gc_provider = google_client_provider
 
 	@abc.abstractmethod
@@ -72,7 +69,7 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 		pass
 
 	@abc.abstractmethod
-	def find_audios_to_download(self, config: Union[YoutubeFeedConfig, RSSFeedConfig]) -> List[DownloadStream]:
+	def find_audios_to_download(self) -> List[DownloadStream]:
 		pass
 
 	@abc.abstractmethod
@@ -93,10 +90,10 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 		"""
 		pass
 
-	def download_all_audios(self, config: Union[YoutubeFeedConfig, RSSFeedConfig]) -> None:
+	def download_all_audios(self) -> List[DownloadStream]:
 		create_temp_local_directory(self.audio_folder)
 
-		files_to_download = self.find_audios_to_download(config)
+		files_to_download = self.find_audios_to_download()
 		
 		print("Downloading {} audio files ... ".format(len(files_to_download)))
 		with ProcessPoolExecutor() as executor:
@@ -104,4 +101,4 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 
 		delete_temp_local_directory(self.audio_folder)
 
-
+		return files_to_download

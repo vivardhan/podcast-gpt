@@ -1,5 +1,5 @@
 .venv
-bazel-*
+*bazel*
 *.DS_Store*
 *__pycache__*
 credentials/*
