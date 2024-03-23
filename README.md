@@ -73,42 +73,30 @@ deactivate
 ## 2. Data API
 The data API supports the following functionality.
 
-### 2.1 Downloading audio
-To download all audio files for the supported podcasts and upload them to GCS, run the following:
+### 2.1 Extracting Data
+To run the data extraction pipeline, run the following:
 ```bash
-bazel run //data_api:download_audio_files
+bazel run //:main
 ```
-Note that this process also parses the description of each podcast episode to discover chapters within the episode. If chapters are found, the timestamps and chapter titles are also saved to GCS.
 
-### 2.2 Transcribing audio
-To transcribe audio files that have been put in GCS, run the following:
-```bash
-bazel run //data_api:transcribe_audio_files
-```
-This will create 3 sets of transcriptions, all of which are uploaded to GCS:
-1. without speaker identifiers,
-2. with speaker identifiers,
-3. raw json output from assembly AI
+This does the following for each podcast:
+1. Retrieves a list of episodes
+2. For episodes whose data isn't already available on GCS:
+- Retrieve and upload audio data to GCS
+- Parse chapters for the episode (timestamps and chapter descriptions) from the episode description and store it on GCS
+- Transcribe the audio to text using Assembly AI and upload 3 types of transcripts to GCS - without speaker identifiers, with speaker identifiers and json output taken directly from assembly AI. Upload all of these to GCS
+- Create transcripts for each chapter, given the chapter information above and upload these to GCS
 
-### 2.3 Accessing transcripts
+### 2.2 Accessing transcripts
 Run the following to see how many words are in all the raw transcripts for each podcast:
 ```bash
-bazel run //data_api:transcript_stats
+bazel run //:transcript_stats
 ```
 This binary (see `data_api/transcript_inspector/main.py`) also shows how to access the contents of transcripts.
 
-### 2.4 Chapterize transcripts
-This allows creation of transcripts for each chapter using the outputs obtained from sections 2.1 and 2.2. Since these transcripts are shorter and focussed on a specific topic, they are better suited for two purposes:
-1. Generating embeddings for the purpose of RAG using a vector DB
-2. Generating QA pairs for training and evaluation (section 2.5)
-Run the following binary to chapterize transcripts and save them to GCS:
-```bash
-bazel run //data_api:chapterize_transcripts
-```
-
-### 2.5 Using LLMs to generate question/answer data
+### 2.3 Using LLMs to generate question/answer data
 Here, we wish to generate question/answer pairs for the purpose of finetuning our Podcast GPT model as well as for evaluating it. The technique to do this automatically, is to provide chapterized transcripts of podcast episodes to existing LLMs in the form of a prompt that asks the LLM to convert the chapterized transcript into a list of question and answer pairs. These question and answer pairs will be saved to GCS for further use in training and evaluation.
 Run the following binary (still WIP) to obtain the question/answer pairs:
 ```bash
-bazel run //data_api:generate_qa_data
+bazel run //:generate_qa_data
 ```
