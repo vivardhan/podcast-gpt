@@ -37,7 +37,7 @@ python3 -m pip install -r requirements.txt
 ```
 
 ##### 1.1.4.2 Bazel
-Bazel is used as the build system. Install it using these for your operating system:
+Bazel is used as the build system. Install it for your operating system:
 
 For Mac:
 ```bash
