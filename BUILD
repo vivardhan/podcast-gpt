@@ -53,6 +53,7 @@ py_library(
 	],
 	deps=[
 		":utils",
+		":transcribe_audio_files",
 	],
 )
 
