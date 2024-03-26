@@ -3,10 +3,13 @@ from bisect import bisect
 from dataclasses import dataclass
 import json
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # Package Imports
-from google_client_provider import GoogleClientProvider
+from data_api.audio_download.audio_downloader import (
+	CHAPTERS_KEY,
+	GUEST_KEY,
+)
 from data_api.utils.gcs_utils import (
 	download_textfile_as_string_gcs,
 	file_exists_gcs,
@@ -14,6 +17,7 @@ from data_api.utils.gcs_utils import (
 	upload_string_as_textfile_gcs,
 )
 from data_api.utils.paths import Paths
+from google_client_provider import GoogleClientProvider
 
 SENTENCE_END_PUNCTUATIONS = ['.', '?', '!']
 
@@ -126,7 +130,23 @@ def count_num_speakers(words_list: json) -> int:
 	return len(speakers)
 
 
-def construct_chapter_text(words_list: json, start_index: int, end_index: int, num_speakers: int) -> str:
+def map_aai_speaker_to_name(aai_speaker: str, podcast_host: str, podcast_guest: Optional[str]) -> str:
+	"""
+	Maps the assembly AI speaker identifier (A, B, etc.) to the speaker's name
+
+	params:
+		podcast_host:
+			The podcast host name
+		pocast_guest:
+			The guest on the podcast episode
+	"""
+	if aai_speaker == 'A':
+		return podcast_host
+	else:
+		return podcast_guest
+
+
+def construct_chapter_text(words_list: json, start_index: int, end_index: int, num_speakers: int, podcast_host: str, podcast_guest: Optional[str]) -> str:
 	"""
 	Given the words list of an assembly AI transcript and the start and end index element
 	of a chapter, construct text transcript for the chapter
@@ -140,6 +160,10 @@ def construct_chapter_text(words_list: json, start_index: int, end_index: int, n
 			The index in words_list where the returned text should start
 		end_index:
 			The index in words_list where the returned text should end
+		podcast_host:
+			The podcast host's name
+		podcast_guest:
+			The podcast guest name, if there was a guest
 
 	returns:
 		A text transcript, eg.
@@ -161,7 +185,7 @@ def construct_chapter_text(words_list: json, start_index: int, end_index: int, n
 		curr_speaker = curr_word["speaker"]
 		if num_speakers > 1:
 			if not prev_speaker or prev_speaker != curr_speaker:
-				text = text.strip() + "\n\nSpeaker {}:\n".format(curr_speaker)
+				text = text.strip() + "\n\n{}:\n".format(map_aai_speaker_to_name(curr_speaker, podcast_host, podcast_guest))
 
 		text += curr_word["text"] + " "
 		prev_speaker = curr_speaker
@@ -198,22 +222,29 @@ def convert_timestamp_string_to_milliseconds(timestamp_string: str) -> int:
 
 class TranscriptChapterizer:
 
-	def __init__(self, gc_provider: GoogleClientProvider, podcast_name: str):
+	def __init__(self, gc_provider: GoogleClientProvider, podcast_name: str, podcast_host: str):
 		self.gc_provider = gc_provider
 		self.podcast_name = podcast_name
+		self.podcast_host = podcast_host
 
-	def _split_transcript_into_chapters(self, assembly_ai_transcript: json, chapters: json) -> Dict[str, str]:
+	def _split_transcript_into_chapters(self, assembly_ai_transcript: json, metadata: json) -> Dict[str, str]:
 		"""
 		Given a transcript and chapter timestamps and titles, returns a list of chapter transcripts
 		
 		params:
-			assembly_ai_transcript: The raw transcript from assembly AI in json format
-			chapters: json formated list of (timestamp, title) pairs describing chapters
+			assembly_ai_transcript: 
+				The raw transcript from assembly AI in json format
+			metadata: 
+				json formated metadata. there are two keys:
+					guest: The name of the podcast guest (or None) if there is no guest
+					chapters: list of (timestamp, title) pairs describing chapters
 
 		returns:
 			Dictionary that maps chapter titles to transcript text for the chapter
 
 		"""
+		podcast_guest = metadata[GUEST_KEY]
+		chapters = metadata[CHAPTERS_KEY]
 		chapter_transcripts = {}
 		words_list = assembly_ai_transcript["words"]
 		num_speakers = count_num_speakers(words_list)
@@ -236,7 +267,7 @@ class TranscriptChapterizer:
 
 			end_elem = transcript_break_boundaries[end_boundary_index] if end_boundary_index < len(transcript_break_boundaries) else transcript_break_boundaries[-1]
 
-			chapter_transcripts[title] = construct_chapter_text(words_list, start_elem.index, end_elem.index, num_speakers)
+			chapter_transcripts[title] = construct_chapter_text(words_list, start_elem.index, end_elem.index, num_speakers, self.podcast_host, podcast_guest)
 			curr_index = end_boundary_index
 
 		return chapter_transcripts
@@ -272,8 +303,8 @@ class TranscriptChapterizer:
 				continue
 
 			chapters_file = Paths.get_chapters_file_path(self.podcast_name, title)
-			if not file_exists_gcs(self.gc_provider, chapters_file):
-				continue
+			# if not file_exists_gcs(self.gc_provider, chapters_file):
+			# 	continue
 
 			print("Chapterizing: {}".format(title))
 			transcript_text = download_textfile_as_string_gcs(self.gc_provider, Paths.get_aai_transcript_path(self.podcast_name, title))
