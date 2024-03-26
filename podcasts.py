@@ -39,11 +39,6 @@ class Episode:
 	# List of chapters in pairs of timestamp and chapter heading
 	chapters: List[Tuple[str, str]]
 
-def remove_extension(path: str) -> str:
-	# Removes the extension of a file path
-	dot_pos = path.rfind('.')
-	return path[:dot_pos]
-
 @dataclass
 class Podcast:
 	"""Encapsulates information about a podcast"""
@@ -69,9 +64,6 @@ class Podcast:
 	# The transcript chapterizer instance
 	transcript_chapterizer: TranscriptChapterizer = field(init=False)
 
-	# The episodes in this podcast
-	episodes: List[Episode] = field(init=False)
-
 	def __post_init__(self):
 		self.audio_downloader = DownloaderFactory(self.name, self.feed_config, self.gc_provider)
 		self.audio_transcriber = AudioTranscriber(self.gc_provider, self.name, self.feed_config.audio_extension)
@@ -81,26 +73,13 @@ class Podcast:
 		print("Extracting data for: {}".format(self.name))
 
 		# Download all audios
-		downloaded_files = self.audio_downloader.download_all_audios()
-
-		self.episodes = [
-			Episode(
-				podcast_name=self.name,
-				podcast_host=self.host_name,
-				podcast_guest=f.podcast_guest,
-				title=remove_extension(os.path.basename(f.downloaded_name)),
-				chapters=f.chapters,
-			)
-			for f in downloaded_files
-		]
-
-		titles = [e.title for e in self.episodes]
+		self.audio_downloader.download_all_audios()
 
 		# Transcribe all episodes
-		self.audio_transcriber.transcribe_all_audio_files(titles)
+		self.audio_transcriber.transcribe_all_audio_files()
 
 		# Chapterize transcripts
-		self.transcript_chapterizer.chapterize_all_transcripts(titles)
+		self.transcript_chapterizer.chapterize_all_transcripts()
 
 gc_provider = GoogleClientProvider()
 huberman_lab = Podcast(

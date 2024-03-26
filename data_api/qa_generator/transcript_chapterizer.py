@@ -273,19 +273,15 @@ class TranscriptChapterizer:
 		return chapter_transcripts
 
 
-	def chapterize_all_transcripts(self, titles: List[str]) -> None:
+	def chapterize_all_transcripts(self) -> None:
 		"""
-		Creates transcripts for each chapter in each transcript for a list of episode titles
-
-		params:
-			titles:
-				A list of episode titles
+		Creates transcripts for each chapter in each transcript for this podcast
 
 		returns:
 			None
 			
 			The resulting chapterized transcripts are saved to gcs, one file per podcast episode
-			A dictionary mapping the podcast episode title to chapter headings and their transcripts, i.e.
+			Each file contains a dictionary mapping chapter headings and their transcripts, i.e.
 
 			filename: "episode_1.json", contents:
 			{
@@ -294,17 +290,19 @@ class TranscriptChapterizer:
 					...
 			}
 
-
 		"""
 		print("Running chapterization for {}".format(self.podcast_name))
-		for title in titles:
-			chapterized_file = Paths.get_chapterized_transcript_path(self.podcast_name, title)
+
+		chapterized_transcripts_folder = Paths.get_chapterized_data_folder(self.podcast_name)
+		chapterized_files = list_files_gcs(self.gc_provider, chapterized_transcripts_folder, Paths.JSON_EXT)
+		for chapterized_file in chapterized_files:
 			if file_exists_gcs(self.gc_provider, chapterized_file):
 				continue
 
+			title = Paths.get_title_from_path(chapterized_file)
 			chapters_file = Paths.get_chapters_file_path(self.podcast_name, title)
-			# if not file_exists_gcs(self.gc_provider, chapters_file):
-			# 	continue
+			if not file_exists_gcs(self.gc_provider, chapters_file):
+				continue
 
 			print("Chapterizing: {}".format(title))
 			transcript_text = download_textfile_as_string_gcs(self.gc_provider, Paths.get_aai_transcript_path(self.podcast_name, title))

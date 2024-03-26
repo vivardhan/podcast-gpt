@@ -60,13 +60,9 @@ class AudioTranscriber:
         self.podcast_name = podcast_name
         self.extension = extension
 
-    def find_untranscribed_audio_files(self, titles: List[str]) -> List[AudioToTranscribe]:
+    def find_untranscribed_audio_files(self) -> List[AudioToTranscribe]:
         """
-        Looks for audio files that have not been transcribed, given a list of episode titles
-
-        params:
-            titles:
-                A list of episode titles
+        Looks for audio files that have not been transcribed for this podcast
 
         returns:
             A list of audio files to transcribe 
@@ -75,6 +71,8 @@ class AudioTranscriber:
         print("Looking for untranscribed_files for {} ...".format(self.podcast_name))
         untranscribed_files = []
 
+        audio_folder = Paths.get_audio_data_folder(self.podcast_name)
+        audio_files = list_files_gcs(self.gc_provider, audio_folder, self.extension)
         raw_transcript_folder = Paths.get_raw_transcript_folder(self.podcast_name)
         raw_transcript_files = set(list_files_gcs(self.gc_provider, raw_transcript_folder, Paths.TXT_EXT))
         speaker_transcript_folder = Paths.get_speaker_transcript_folder(self.podcast_name)
@@ -83,8 +81,8 @@ class AudioTranscriber:
         aai_transcript_files = set(list_files_gcs(self.gc_provider, aai_transcript_folder, Paths.JSON_EXT))
         
         ext_len = len(self.extension)
-        for title in titles:
-            audio_file = Paths.get_audio_path(self.podcast_name, title, self.extension)
+        for audio_file in audio_files:
+            title = Paths.get_title_from_path(audio_file)
             raw_transcript_file = Paths.get_raw_transcript_path(self.podcast_name, title)
             speaker_transcript_file = Paths.get_speaker_transcript_path(self.podcast_name, title)
             aai_transcript_file = Paths.get_aai_transcript_path(self.podcast_name, title)
@@ -147,15 +145,11 @@ class AudioTranscriber:
         )
 
 
-    def transcribe_all_audio_files(self, titles: List[str]) -> None:
+    def transcribe_all_audio_files(self) -> None:
         """
-        Transcribes the audio files corresponding to the provided episode titles
+        Transcribes the audio files corresponding to the podcast
 
         The resulting transcripts are saved to GCS
-
-        params:
-            titles:
-                A list of episode titles
         """
 
         # Create temporary local directories
@@ -168,7 +162,7 @@ class AudioTranscriber:
             create_temp_local_directory(tf)
 
         # Find untranscribed files among the titles
-        untranscribed_files = self.find_untranscribed_audio_files(titles)
+        untranscribed_files = self.find_untranscribed_audio_files()
 
         if len(untranscribed_files) > 0:
             print("Transcribing {} files for {}".format(len(untranscribed_files), self.podcast_name))
