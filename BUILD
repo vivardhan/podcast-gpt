@@ -117,11 +117,11 @@ py_binary(
 )
 
 py_binary(
-	name="modify_speaker_labels_huberman",
+	name="modify_speaker_labels",
 	srcs=[
-		"data_api/speech_to_text/huberman_speakers_modifier.py",
+		"data_api/speech_to_text/speakers_modifier.py",
 	],
-	main="data_api/speech_to_text/huberman_speakers_modifier.py",
+	main="data_api/speech_to_text/speakers_modifier.py",
 	deps=[
 		":utils",
 	],
