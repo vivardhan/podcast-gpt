@@ -43,7 +43,7 @@ def process_all_transcripts(gc_provider: GoogleClientProvider, podcast_name: str
     aai_folder = Paths.get_aai_transcript_folder(podcast_name)
     create_temp_local_directory(aai_folder)
 
-    aai_transcript_files = list_files_gcs(gc_provider, aai_folder, JSON_EXT)
+    aai_transcript_files = list_files_gcs(gc_provider, aai_folder, Paths.JSON_EXT)
     for transcript_file in aai_transcript_files:
         process_aai_transcript(gc_provider, transcript_file)
 
