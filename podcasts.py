@@ -1,13 +1,10 @@
 # System Imports
 from dataclasses import dataclass, field
 import os
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 # Package Imports
-from data_api.audio_download.audio_downloader import (
-	AudioDownloader,
-	DownloadStream,
-)
+from data_api.audio_download.audio_downloader import AudioDownloader
 from data_api.audio_download.factory import DownloaderFactory
 from data_api.audio_download.feed_config import (
 	hubermanlab_config,
@@ -19,12 +16,22 @@ from data_api.speech_to_text.assembly_ai_transcriber import AudioTranscriber
 from data_api.qa_generator.transcript_chapterizer import TranscriptChapterizer
 from google_client_provider import GoogleClientProvider
 
+def get_host_for_podcast_name(podcast_name: str) -> str:
+	"""Returns the name of the host for a given podcast"""
+
+
 @dataclass
 class Episode:
 	"""Encapsulates information about a single podcast episode"""
 
 	# The name of the podcast that this episode belongs to
 	podcast_name: str
+
+	# The host of the podcast
+	podcast_host: str
+
+	# The guest on the podcast, if there is one
+	podcast_guest: Optional[str]
 
 	# Episode title
 	title: str
@@ -43,6 +50,9 @@ class Podcast:
 
 	# Name of the podcast
 	name: str
+
+	# Name of the podcast host
+	host_name: str
 
 	# The feed configuration for this podcast's data source
 	feed_config: Union[YoutubeFeedConfig, RSSFeedConfig]
@@ -65,7 +75,7 @@ class Podcast:
 	def __post_init__(self):
 		self.audio_downloader = DownloaderFactory(self.name, self.feed_config, self.gc_provider)
 		self.audio_transcriber = AudioTranscriber(self.gc_provider, self.name, self.feed_config.audio_extension)
-		self.transcript_chapterizer = TranscriptChapterizer(self.gc_provider, self.name)
+		self.transcript_chapterizer = TranscriptChapterizer(self.gc_provider, self.name, self.host_name)
 
 	def run_data_extraction_pipeline(self):
 		print("Extracting data for: {}".format(self.name))
@@ -76,6 +86,8 @@ class Podcast:
 		self.episodes = [
 			Episode(
 				podcast_name=self.name,
+				podcast_host=self.host_name,
+				podcast_guest=f.podcast_guest,
 				title=remove_extension(os.path.basename(f.downloaded_name)),
 				chapters=f.chapters,
 			)
@@ -93,11 +105,13 @@ class Podcast:
 gc_provider = GoogleClientProvider()
 huberman_lab = Podcast(
 	name="hubermanlab",
+	host_name="Dr. Andrew Huberman",
 	feed_config=hubermanlab_config,
 	gc_provider=gc_provider,
 )
 peterattia_md = Podcast(
 	name="PeterAttiaMD",
+	host_name="Dr. Peter Attia",
 	feed_config=peterattia_config,
 	gc_provider=gc_provider,
 )
