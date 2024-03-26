@@ -15,6 +15,13 @@ class Paths:
 	CHAPTERIZED_DATA_FOLDER = "chapterized_data"
 
 	@classmethod
+	def get_title_from_path(cls, path: str) -> str:
+		# Removes the extension of a file path
+		filename = os.path.basename(path)
+		dot_pos = filename.rfind('.')
+		return filename[:dot_pos]
+
+	@classmethod
 	def get_audio_data_folder(cls, podcast_name: str) -> str:
 		return os.path.join(podcast_name, cls.AUDIO_DATA_FOLDER)
 
