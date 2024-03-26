@@ -51,9 +51,9 @@ def process_all_transcripts(gc_provider: GoogleClientProvider, podcast_name: str
 
 
 def main():
-    huberman_podcast_name = "hubermanlab"
+    podcast_name = "PeterAttiaMD"
     gc_provider = GoogleClientProvider()
-    process_all_transcripts(gc_provider, huberman_podcast_name)
+    process_all_transcripts(gc_provider, podcast_name)
 
 if __name__ == "__main__":
     main()
