@@ -16,8 +16,8 @@ from data_api.utils.paths import Paths
 class RSSAudioDownloader(AudioDownloader):
 
 	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
-		# if not file_exists_gcs(self.gc_provider, stream.chapters_path):
-		stream.upload_metadata_to_gcs(self.gc_provider)
+		if not file_exists_gcs(self.gc_provider, stream.chapters_path):
+			stream.upload_metadata_to_gcs(self.gc_provider)
 
 		if not file_exists_gcs(self.gc_provider, stream.audio_path):
 			print("Downloading {}".format(stream.downloaded_name))
