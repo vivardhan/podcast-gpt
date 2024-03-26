@@ -25,8 +25,15 @@ class RSSAudioDownloader(AudioDownloader):
 			stream.upload_audio_to_gcs(self.gc_provider)
 
 	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
+		# First clean the description by replacing all href tags with the contained text.
+		# Eg. '<a href= "2021-05-11%2003:15:00%20EDT">3:15</a>' will be replaced by '3:15'
+		href_pattern = '(\<a href\=.*?\>)(.*?)(\<\/a\>)'
+		nohrefs = re.sub(href_pattern, r'\g<2>', description)
+
 		# See https://stackoverflow.com/questions/8318236/regex-pattern-for-hhmmss-time-string
-		# timestamp_pattern = '?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d'
+		# timestamp_pattern = '?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)([0-5]?\d'
+		# The minor modification from the Stackoverflow post is to remove the optionality of the minute block
+		# i.e. at least one colon is required.
 
 		# The pattern is expected to be a list of <li> </li> tags, with the contained text as follows:
 		# "chapter title [hh:mm:ss]"
@@ -35,8 +42,8 @@ class RSSAudioDownloader(AudioDownloader):
 		# 2. The square brackets around the timestamp may be parentheses instead
 		# 3. There may be some additional text within the brackets containing the timestamp (before or after hh:mm:ss)
 		# 4. The timestamp may be truncated, eg. 1:45 or 3:24;17 or 00:1:30 - see the comment above for the pattern
-		pattern = '(\<li.*?\>)(.*?[\[|\(].*?)(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)(.*?[\]|\)].*?\<\/li\>)'
-		matches = re.findall(pattern, description)
+		pattern = '(\<li.*?\>)(.*?[\[|\(].*?)(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)([0-5]?\d)(.*?[\]|\)].*?\<\/li\>)'
+		matches = re.findall(pattern, nohrefs)
 
 		chapters = []
 		for m in matches:
