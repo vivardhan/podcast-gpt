@@ -2,8 +2,12 @@
 import abc
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
+import json
 import os
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
+
+# Third Party Imports
+from openai import OpenAI
 
 # Package Imports
 from data_api.audio_download.feed_config import (
@@ -11,8 +15,15 @@ from data_api.audio_download.feed_config import (
 	YoutubeFeedConfig,
 )
 from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
+from data_api.utils.gcs_utils import (
+	upload_string_as_textfile_gcs,
+	upload_to_gcs,
+)
 from data_api.utils.paths import Paths
 from google_client_provider import GoogleClientProvider
+
+CHAPTERS_KEY = "chapters"
+GUEST_KEY = "guest"
 
 @dataclass
 class DownloadStream:
@@ -35,6 +46,8 @@ class DownloadStream:
 	# "2:30" (2 minutes, 30 seconds)
 	chapters: List[Tuple[str, str]]
 
+	# Podcast guest
+	podcast_guest: Optional[str]
 
 	# The remaining fields are path related and should not be initialized
 	# They are computed during __post_init__()
@@ -56,9 +69,26 @@ class DownloadStream:
 		self.chapters_path = os.path.join(self.folder_path, chapters_file)
 		self.extension = self.downloaded_name[dot_pos + 1:]
 
+	def upload_metadata_to_gcs(self, gc_provider: GoogleClientProvider) -> None:
+		upload_string_as_textfile_gcs(
+			gc_provider, 
+			self.chapters_path, 
+			json.dumps({
+				GUEST_KEY: self.podcast_guest,
+				CHAPTERS_KEY: self.chapters,
+			}),
+		)
+
+	def upload_audio_to_gcs(self, gc_provider: GoogleClientProvider) -> None:
+		upload_to_gcs(gc_provider, self.audio_path)
+
 
 # Abstract class for AudioDownloaders
 class AudioDownloader(metaclass=abc.ABCMeta):
+
+	openai_client = OpenAI()
+	model_version = "gpt-4-0125-preview"
+
 	def __init__(self, name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig], google_client_provider: GoogleClientProvider):
 		self.config = config
 		self.audio_folder = os.path.join(name, Paths.AUDIO_DATA_FOLDER)
@@ -89,6 +119,62 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 			]
 		"""
 		pass
+
+	@classmethod
+	def extract_guest(cls, title: str) -> Optional[str]:
+		"""
+		Extracts the name of the guest on a podcast episode, if one was present
+
+		params:
+			title:
+				The podcast episode titles
+
+		returns:
+			The name of the guest if there was one, and None otherwise
+		"""
+		no_guest_response = "No guest"
+		prompt = """
+		Extract the full name of the guest that appears in the given podcast episode title.
+		If no guest name appears, respond with {}.
+		If there is a guest, respond with just the name.
+
+		Example 1:
+		Podcast Episode Title:
+		How Meditation Works & Science-Based Effective Meditations | Huberman Lab Podcast #96
+		Guest Name:
+		No guest
+
+		Example 2:
+		Podcast Episode Title:
+		David Goggins: How to Build Immense Inner Strength
+		Guest Name:
+		David Goggins
+
+		Example 3:
+		Podcast Episode Title:
+		High-intensity interval training: benefits, risks, protocols, and impact on longevity
+		Guest Name:
+		No guest
+
+		Example 4:
+		Podcast Episode Title:
+		#290 ‒ Liquid biopsies for early cancer detection, the role of epigenetics in aging, and the future of aging research | Alex Aravanis, M.D., Ph.D. 
+		Guest Name:
+		Alex Aravanis
+
+		Podcast Episode Title:
+		{}
+		Guest Name:
+		""".format(no_guest_response, title)
+		response = cls.openai_client.chat.completions.create(
+			model = cls.model_version,
+  			messages=[
+  				{"role": "system", "content": "You are a helpful assistant."},
+  				{"role": "user", "content": prompt},
+  			],
+		).choices[0].message.content
+
+		return None if response == no_guest_response else response
 
 	def download_all_audios(self) -> List[DownloadStream]:
 		create_temp_local_directory(self.audio_folder)

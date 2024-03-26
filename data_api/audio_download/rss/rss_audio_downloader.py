@@ -1,5 +1,4 @@
 # System Imports
-import json
 import os
 import re
 from typing import List, Tuple
@@ -11,22 +10,19 @@ import feedparser
 # Package Imports
 from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
 from data_api.audio_download.factory import RSSFeedConfig
-from data_api.utils.gcs_utils import (
-	file_exists_gcs, 
-	upload_string_as_textfile_gcs, 
-	upload_to_gcs,
-)
+from data_api.utils.gcs_utils import file_exists_gcs
+from data_api.utils.paths import Paths
 
 class RSSAudioDownloader(AudioDownloader):
 
 	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
-		if not file_exists_gcs(self.gc_provider, stream.chapters_path):
-			upload_string_as_textfile_gcs(self.gc_provider, stream.chapters_path, json.dumps(stream.chapters))
+		# if not file_exists_gcs(self.gc_provider, stream.chapters_path):
+		stream.upload_metadata_to_gcs(self.gc_provider)
 
 		if not file_exists_gcs(self.gc_provider, stream.audio_path):
 			print("Downloading {}".format(stream.downloaded_name))
 			urlretrieve(stream.url, stream.audio_path)
-			upload_to_gcs(self.gc_provider, stream.audio_path)
+			stream.upload_audio_to_gcs(self.gc_provider)
 
 	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
 		# See https://stackoverflow.com/questions/8318236/regex-pattern-for-hhmmss-time-string
@@ -78,13 +74,21 @@ class RSSAudioDownloader(AudioDownloader):
 					if any([f in file_name for f in self.config.filter_out]):
 						break
 
+					if (
+						file_exists_gcs(self.gc_provider, os.path.join(self.audio_folder, file_name)) and
+						file_exists_gcs(self.gc_provider, os.path.join(self.audio_folder, Paths.get_chapters_file_name_for_title(title)))
+					):
+						continue
+
 					if chapters:
+						guest = self.extract_guest(title)
 						files_to_download.append(
 							DownloadStream(
 								url=link.href, 
 								folder_path=self.audio_folder, 
 								downloaded_name=file_name,
 								chapters=chapters,
+								podcast_guest=guest,
 							)
 						)
 
