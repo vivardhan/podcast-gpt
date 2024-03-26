@@ -26,24 +26,45 @@ class GPT4QAGenerator(LLMQAGenerator):
 			The initialized model
 		"""
 		self.openai_client = OpenAI()
-		self.model_version = "gpt-3.5-turbo-0125"
+		self.model_version = "gpt-4-0125-preview"
 
-	def create_qa_prompt(self, transcript: str) -> str:
+	def create_qa_prompt(self, podcast_host: str, episode_title: str, chapter_title: str, chapter_transcript: str) -> str:
 		"""
-		Given a transcript file, creats a prompt to run inference with.
+		Given an episode title, chapter title and chapter transcript, creates a prompt to run inference with.
 
 		params:
-			transcript: The string from the transcript file
+			podcast_host:
+				The name of the podcast host
+			episode_title: 
+				The title of the episode
+			chapter_title: 
+				The title of the current chapter from the episode
+			chapter_transcript: 
+				The transcript of current chapter
 
 		returns:
 			The prompt text
 		"""
 		return  """
-        Given the conversation below from a podcast, extract a list of questions and answers for each salient point discussed. \
-        The questions should be focussed on broad insights rather than on individual details. Questions and answers should \
-        refer to the speakers in the third person. \
-        Return the resulting question-answer pairs in a json format: [\{question: "First question here.", answer:"First answer here."\}]
-        """ + transcript + '\nQuestion Answer Pairs:\n'
+        The following is an excerpt from a podcast hosted by {}. 
+        The title of the current episode of the podcast is {}.
+        The topic being discussed in the current excerpt is {}.
+        
+        Extract a list of question answer pairs from the excerpt, covering the following areas, if possible:
+        1. Facts in the discussion.
+        2. Advice for resolving an issue.
+        3. Strategies for optimizing for specific personal goals.
+        4. Explanations of nuanced or complex ideas and topics.
+
+        When framing questions, follow these rules as far as possible:
+        1. Ensure that the question makes sense to a reader who is unfamiliar with the content of the excerpt.
+        1. Avoid references to the podcast, speakers, episode title or chapter title.
+        2. Do not assume any knowledge of the provided excerpt by the reader of the question.
+
+        If the questions and answers refer to the podcast host or other speakers, they should do so in the third person.
+        """.format(podcast_host, episode_title, chapter_title) + \
+        'Return the question-answer pairs in json format: [\{question: "First question here.", answer:"First answer here."\}]' + \
+        "Excerpt: {}\nQuestion Answer Pairs:\n".format(chapter_transcript)
 
 	def run_model_inference(self, prompt: str) -> str:
 		"""

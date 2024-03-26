@@ -30,12 +30,14 @@ class LLMQAGenerator(metaclass=abc.ABCMeta):
 		pass
 
 	@abc.abstractmethod
-	def create_qa_prompt(self, transcript: str) -> str:
+	def create_qa_prompt(self, episode_title: str, chapter_title: str, chapter_transcript: str) -> str:
 		"""
-		Given a transcript file, creats a prompt to run inference with.
+		Given an episode title, chapter title and chapter transcript, creates a prompt to run inference with.
 
 		params:
-			transcript: The string from the transcript file
+			episode_title: The title of the episode
+			chapter_title: The title of the current chapter from the episode
+			transcript: The transcript of current chapter
 
 		returns:
 			The prompt text
@@ -73,14 +75,19 @@ class LLMQAGenerator(metaclass=abc.ABCMeta):
 		"""
 		pass
 
-	def generate_question_answer_pairs(self, transcript: str) -> List[Tuple[str, str]]:
+	def generate_question_answer_pairs(self, podcast_host: str, episode_title: str, chapter_title: str, chapter_transcript: str) -> List[Tuple[str, str]]:
 		"""
-		Generates QA pairs using self.model for a transcript	
+		Generates QA pairs using self.model for a chapter within a podcast episode	
 
 		You do not need to re-implement this function for a child class
 
-		params:
-			transcript: The text for a transcript
+		podcast_host:
+				The name of the podcast host
+			episode_title: 
+				The title of the episode
+			chapter_title: 
+				The title of the current chapter from the episode
+			transcript: The transcript of current chapter
 
 		returns:
 			a List of question answer tuples, i.e.:
@@ -90,6 +97,6 @@ class LLMQAGenerator(metaclass=abc.ABCMeta):
 				(question_n), answer_n),
 			]
 		"""
-		prompt = self.create_qa_prompt(transcript)
+		prompt = self.create_qa_prompt(podcast_host, episode_title, chapter_title, chapter_transcript)
 		output = self.run_model_inference(prompt)
 		return self.parse_model_output(output)

@@ -35,8 +35,9 @@ def main():
 			for t in chapterized_files:
 				text = download_textfile_as_string_gcs(gc_provider, t)
 				chapters_json = json.loads(text)
+				episode_title = os.path.basename(t)[:-len(Paths.JSON_EXT)]
 				chapters_qa_pairs = {
-					chapter: model.generate_question_answer_pairs(transcript)
+					chapter: model.generate_question_answer_pairs(podcast.host_name, episode_title, chapter, transcript)
 					for chapter, transcript in chapters_json.items()
 				}
 
