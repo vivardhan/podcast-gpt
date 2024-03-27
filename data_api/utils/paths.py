@@ -11,6 +11,7 @@ class Paths:
 	QA_PAIRS_FOLDER = "qa_pairs"
 	TXT_EXT = ".txt"
 	JSON_EXT = ".json"
+	VECTOR_DB_PATH = "vector_db" + JSON_EXT
 	CHAPTERS_SUFFIX = "chapters"
 	CHAPTERIZED_DATA_FOLDER = "chapterized_data"
 
