@@ -85,9 +85,9 @@ py_binary(
 )
 
 py_binary(
-	name="main",
+	name="extract_data",
 	srcs=[
-		"main.py",
+		"extract_data.py",
 	],
 	deps=[
 		":podcast_data",

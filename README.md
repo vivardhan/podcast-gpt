@@ -56,7 +56,9 @@ For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu
 5. At the top, choose 'KEYS'
 6. Click on 'ADD KEY' > Create new key
 7. Choose 'JSON' and click on 'CREATE'. A file with a private key will be downloaded to your computer. 
-8. Put the downloaded file in [repo_root]/credentials and name it 'compute_engine_key.json'
+8. Put the downloaded file in [repo_root]/credentials and name it 'compute_engine_key.json'.
+
+Note: The credentials folder is in .gitignore so that you don't accidentally commit any credentials to the repo.
 
 ##### 1.1.5.2 OpenAI Credentials
 1. Contact Sakshi Jain (sakshi.r.jain@gmail.com) to obtain the OpenAI API key for this project.
@@ -95,7 +97,7 @@ The data API supports the following functionality.
 ### 2.1 Extracting Data
 To run the data extraction pipeline, run the following:
 ```bash
-bazel run //:main
+bazel run //:extract_data
 ```
 
 This does the following for each podcast:
