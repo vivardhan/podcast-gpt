@@ -70,6 +70,21 @@ py_library(
 )
 
 py_binary(
+	name="run_qa_bot",
+	srcs=[
+		"data_api/embeddings/embeddings_generator.py",
+		"qa_bot/main.py",
+		"qa_bot/qa_bot.py",
+		"qa_bot/vector_db.py",
+	],
+	main="qa_bot/main.py",
+	deps=[
+		":podcast_data",
+		":utils",
+	]
+)
+
+py_binary(
 	name="main",
 	srcs=[
 		"main.py",
@@ -99,6 +114,18 @@ py_binary(
 		"data_api/qa_generator/gpt4.py",
 	],
 	main="data_api/qa_generator/main.py",
+	deps=[
+		":utils",
+		":podcast_data",
+	],
+)
+
+py_binary(
+	name="generate_embeddings",
+	srcs=[
+		"data_api/embeddings/embeddings_generator.py",
+	],
+	main="data_api/embeddings/embeddings_generator.py",
 	deps=[
 		":utils",
 		":podcast_data",
