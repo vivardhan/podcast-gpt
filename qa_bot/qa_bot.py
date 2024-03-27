@@ -61,6 +61,11 @@ class QABot:
 
 		self.quit_string = 'q'
 
+		self.podcast_name_to_title = {
+			"hubermanlab": "Huberman Lab Podcast",
+			"PeterAttiaMD": "The Peter Attia Drive Podcast",
+		}
+
 
 	def construct_prompt(self, question: str, database_matches: List[DatabaseMatch]) -> str:
 		return  "\n".join([
@@ -73,7 +78,7 @@ class QABot:
 			{}
 			""".format(
 				self.base_prompt,
-				match.podcast_title, 
+				self.podcast_name_to_title[match.podcast_title], 
 				match.episode_title, 
 				match.chapter_title, 
 				self.context_db[match.podcast_title][match.episode_title][match.chapter_title],
