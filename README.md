@@ -46,7 +46,9 @@ brew install bazel
 
 For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu#install-on-ubuntu).
 
-#### 1.1.5 Obtain GCP Credentials
+#### 1.1.5 Obtain Credentials
+
+##### 1.1.5.1 GCP Credentials
 1. Go to [Google Cloud Console](console.cloud.google.com) and make sure the 'podcast-gpt' project is selected in the drop down at the top.
 2. Click on the menu button in the top left corner (3 horizontal lines)
 3. Mouse over 'IAM and admin', then click on 'Service accounts' in the menu that opens on the right
@@ -55,6 +57,20 @@ For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu
 6. Click on 'ADD KEY' > Create new key
 7. Choose 'JSON' and click on 'CREATE'. A file with a private key will be downloaded to your computer. 
 8. Put the downloaded file in [repo_root]/credentials and name it 'compute_engine_key.json'
+
+##### 1.1.5.2 OpenAI Credentials
+1. Contact Sakshi Jain (sakshi.r.jain@gmail.com) to obtain the OpenAI API key for this project.
+2. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
+`export OPENAI_API_KEY=[YOUR_API_KEY]`
+3. Then execute:
+```bash
+source ~/.bash_profile
+```
+4. Verify that the key is now available by executing:
+```bash
+echo $OPENAI_API_KEY
+```
+It should print out your API key.
 
 ### 1.2 Future Setup
 
@@ -69,6 +85,9 @@ Once done working on the repo, run:
 ```bash
 deactivate
 ```
+
+#### 1.2.3 Resolving OpenAI API Key Errors:
+You may run into issues if python cannot find your OpenAI credentials in the environment variables. Rerun steps 3 and 4 from section 1.1.5.2 to resolve this.
 
 ## 2. Data API
 The data API supports the following functionality.
@@ -99,4 +118,10 @@ Here, we wish to generate question/answer pairs for the purpose of finetuning ou
 Run the following binary (still WIP) to obtain the question/answer pairs:
 ```bash
 bazel run //:generate_qa_data
+```
+
+## 3. Question Answer Bot
+You can run a question answer bot that will answer your questions based on the 2 podcasts:
+```bash
+bazel run //:run_qa_bot
 ```
