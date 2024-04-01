@@ -1,5 +1,6 @@
 # System Imports
 import json
+import sys
 from typing import List
 
 # Third Party Imports
@@ -14,7 +15,7 @@ from data_api.utils.file_utils import create_temp_local_directory
 from data_api.utils.paths import Paths
 from google_client_provider import GoogleClientProvider
 from podcasts import PODCASTS
-from qa_bot.vector_db import DatabaseMatch, VectorDB
+from data_api.embeddings.vector_db import DatabaseMatch, VectorDB
 
 class QABot:
 
@@ -26,30 +27,13 @@ class QABot:
 		self.system_prompt = 'You answer the user\'s questions based on the provided context.'
 		self.k = 4
 
+		self.podcast_name_to_title = {
+			"hubermanlab": "Huberman Lab Podcast",
+			"PeterAttiaMD": "The Peter Attia Drive Podcast",
+		}
+
 		print("Loading vector database.")
 		self.vector_db = VectorDB(self.gc_provider)
-		
-		print("Loading context database.")
-		self.context_db = {
-			# Podcast Title is outermost key
-			podcast.name : {
-				# Episode Title is middle key
-				Paths.get_title_from_path(chapterized_file) :
-				# Chapter Title is inner most key, Chapter transcript is value
-				json.loads(
-					download_textfile_as_string_gcs(
-						self.gc_provider, 
-						chapterized_file,
-					)
-				)
-				for chapterized_file in list_files_gcs(
-					self.gc_provider, 
-					Paths.get_chapterized_data_folder(podcast.name), 
-					Paths.JSON_EXT,
-				)
-			}
-			for podcast in PODCASTS
-		}
 
 		self.base_prompt = """
 		The following is a set of chapters from transcribed podcasts.
@@ -60,11 +44,6 @@ class QABot:
 		"""
 
 		self.quit_string = 'q'
-
-		self.podcast_name_to_title = {
-			"hubermanlab": "Huberman Lab Podcast",
-			"PeterAttiaMD": "The Peter Attia Drive Podcast",
-		}
 
 
 	def construct_prompt(self, question: str, database_matches: List[DatabaseMatch]) -> str:
@@ -81,7 +60,7 @@ class QABot:
 				self.podcast_name_to_title[match.podcast_title], 
 				match.episode_title, 
 				match.chapter_title, 
-				self.context_db[match.podcast_title][match.episode_title][match.chapter_title],
+				match.chapter_transcript,
 			)
 			for match in database_matches
 		] + [question])
