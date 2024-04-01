@@ -1,3 +1,6 @@
+# System Imports
+import os
+
 # Third Party Imports
 import googleapiclient.discovery
 import googleapiclient.errors
@@ -16,6 +19,7 @@ SCOPES = [
 PROJECT_ID = "podcast-gpt-415000"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+BUCKET_NAME = "podcast-gpt-data"
 
 class GoogleClientProvider:
     """
@@ -29,13 +33,23 @@ class GoogleClientProvider:
         if cls._instance is None:
             cls._instance = super(GoogleClientProvider, cls).__new__(cls)
             
-            cls.CREDENTIALS = obtain_google_oauth_credentials(scopes=SCOPES)
+            if os.environ.get("IS_APP_ENGINE"):
+                # No need to provide credentials since we're in app engine
+                cls.STORAGE_CLIENT = storage.Client(project=PROJECT_ID)
+                cls.youtube_client = googleapiclient.discovery.build(
+                    YOUTUBE_API_SERVICE_NAME, 
+                    YOUTUBE_API_VERSION
+                )
+            else:
+                # Obtain credentials when running locally
+                CREDENTIALS = obtain_google_oauth_credentials(scopes=SCOPES)
+                cls.STORAGE_CLIENT = storage.Client(project=PROJECT_ID, credentials=CREDENTIALS)
+                cls.youtube_client = googleapiclient.discovery.build(
+                    YOUTUBE_API_SERVICE_NAME, 
+                    YOUTUBE_API_VERSION, 
+                    credentials=CREDENTIALS
+                )
 
-            cls.STORAGE_CLIENT = storage.Client(project=PROJECT_ID, credentials=cls.CREDENTIALS)
-            cls.DATA_BUCKET = cls.STORAGE_CLIENT.get_bucket("podcast_gpt_data")
-
-            # Create the youtube data API client
-            cls.youtube_client = googleapiclient.discovery.build(
-                YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, credentials=cls.CREDENTIALS)
+            cls.DATA_BUCKET = cls.STORAGE_CLIENT.get_bucket(BUCKET_NAME)
 
         return cls._instance
