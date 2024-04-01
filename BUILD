@@ -58,24 +58,31 @@ py_library(
 )
 
 py_library(
+	name="generate_embeddings",
+	srcs=[
+		"data_api/embeddings/embeddings_generator.py",
+		"data_api/embeddings/vector_db.py",
+	],
+)
+
+py_library(
 	name="podcast_data",
 	srcs=[
 		"podcasts.py",
 	],
 	deps=[
-		":download_audio_files",
-		":transcribe_audio_files",
 		":chapterize_transcripts",
+		":download_audio_files",
+		":generate_embeddings",
+		":transcribe_audio_files",
 	],
 )
 
 py_binary(
 	name="run_qa_bot",
 	srcs=[
-		"data_api/embeddings/embeddings_generator.py",
 		"qa_bot/main.py",
 		"qa_bot/qa_bot.py",
-		"qa_bot/vector_db.py",
 	],
 	main="qa_bot/main.py",
 	deps=[
@@ -114,18 +121,6 @@ py_binary(
 		"data_api/qa_generator/gpt4.py",
 	],
 	main="data_api/qa_generator/main.py",
-	deps=[
-		":utils",
-		":podcast_data",
-	],
-)
-
-py_binary(
-	name="generate_embeddings",
-	srcs=[
-		"data_api/embeddings/embeddings_generator.py",
-	],
-	main="data_api/embeddings/embeddings_generator.py",
 	deps=[
 		":utils",
 		":podcast_data",
