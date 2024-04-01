@@ -16,29 +16,6 @@ from data_api.speech_to_text.assembly_ai_transcriber import AudioTranscriber
 from data_api.qa_generator.transcript_chapterizer import TranscriptChapterizer
 from google_client_provider import GoogleClientProvider
 
-def get_host_for_podcast_name(podcast_name: str) -> str:
-	"""Returns the name of the host for a given podcast"""
-
-
-@dataclass
-class Episode:
-	"""Encapsulates information about a single podcast episode"""
-
-	# The name of the podcast that this episode belongs to
-	podcast_name: str
-
-	# The host of the podcast
-	podcast_host: str
-
-	# The guest on the podcast, if there is one
-	podcast_guest: Optional[str]
-
-	# Episode title
-	title: str
-
-	# List of chapters in pairs of timestamp and chapter heading
-	chapters: List[Tuple[str, str]]
-
 @dataclass
 class Podcast:
 	"""Encapsulates information about a podcast"""
