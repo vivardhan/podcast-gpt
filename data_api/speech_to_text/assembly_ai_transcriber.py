@@ -11,15 +11,8 @@ import assemblyai as aai
 
 # Package Imports
 from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
-from data_api.utils.gcs_utils import (
-    download_file_gcs,
-    file_exists_gcs,
-    list_files_gcs,
-    upload_string_as_textfile_gcs,
-    upload_to_gcs,
-)
+from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
-from google_client_provider import GoogleClientProvider
 
 # Replace with your API key
 aai.settings.api_key = "9b22f02582ac4fdf892ba609d1080da0"
@@ -55,8 +48,7 @@ class AudioToTranscribe:
 
 class AudioTranscriber:
 
-    def __init__(self, gc_provider: GoogleClientProvider, podcast_name: str, extension: str):
-        self.gc_provider = gc_provider
+    def __init__(self, podcast_name: str, extension: str):
         self.podcast_name = podcast_name
         self.extension = extension
 
@@ -72,13 +64,13 @@ class AudioTranscriber:
         untranscribed_files = []
 
         audio_folder = Paths.get_audio_data_folder(self.podcast_name)
-        audio_files = list_files_gcs(self.gc_provider, audio_folder, self.extension)
+        audio_files = GCSClient.list_files(audio_folder, self.extension)
         raw_transcript_folder = Paths.get_raw_transcript_folder(self.podcast_name)
-        raw_transcript_files = set(list_files_gcs(self.gc_provider, raw_transcript_folder, Paths.TXT_EXT))
+        raw_transcript_files = set(GCSClient.list_files(raw_transcript_folder, Paths.TXT_EXT))
         speaker_transcript_folder = Paths.get_speaker_transcript_folder(self.podcast_name)
-        speaker_transcript_files = set(list_files_gcs(self.gc_provider, speaker_transcript_folder, Paths.TXT_EXT))
+        speaker_transcript_files = set(GCSClient.list_files(speaker_transcript_folder, Paths.TXT_EXT))
         aai_transcript_folder = Paths.get_aai_transcript_folder(self.podcast_name)
-        aai_transcript_files = set(list_files_gcs(self.gc_provider, aai_transcript_folder, Paths.JSON_EXT))
+        aai_transcript_files = set(GCSClient.list_files(aai_transcript_folder, Paths.JSON_EXT))
         
         ext_len = len(self.extension)
         for audio_file in audio_files:
@@ -107,7 +99,7 @@ class AudioTranscriber:
         print("Transcribing {}".format(os.path.basename(audio_to_transcribe.audio_path)))
 
         # Download the audio
-        download_file_gcs(self.gc_provider, audio_to_transcribe.audio_path)
+        GCSClient.download_file(audio_to_transcribe.audio_path)
 
         # Transcribe with AAI
         transcript = transcriber.transcribe(
@@ -123,7 +115,7 @@ class AudioTranscriber:
             f.close()
 
         # Upload raw transcript to GCS
-        upload_to_gcs(self.gc_provider, audio_to_transcribe.raw_transcript_path)
+        GCSClient.upload_file(audio_to_transcribe.raw_transcript_path)
 
         # Save speaker transcript locally
         with open(audio_to_transcribe.speaker_transcript_path, "w") as f:
@@ -135,11 +127,10 @@ class AudioTranscriber:
             f.close()
 
         # Upload speaker transcript to GCS
-        upload_to_gcs(self.gc_provider, audio_to_transcribe.speaker_transcript_path)
+        GCSClient.upload_file(audio_to_transcribe.speaker_transcript_path)
 
         # Upload AAI json transcript to GCS
-        upload_string_as_textfile_gcs(
-            self.gc_provider, 
+        GCSClient.upload_string_as_textfile(
             audio_to_transcribe.aai_transcript_path, 
             json.dumps(get_aai_transcript(transcript.id)),
         )

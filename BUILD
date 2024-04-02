@@ -12,9 +12,10 @@ py_library(
 py_library(
 	name="utils",
 	srcs=[
-		"data_api/utils/paths.py",
 		"data_api/utils/file_utils.py",
 		"data_api/utils/gcs_utils.py",
+		"data_api/utils/paths.py",
+		"data_api/utils/youtube_utils.py",
 	],
 	deps=[
 		"//:google_utils",
@@ -49,7 +50,7 @@ py_library(
 py_library(
 	name="chapterize_transcripts",
 	srcs=[
-		"data_api/qa_generator/transcript_chapterizer.py",
+		"data_api/chapterizer/transcript_chapterizer.py",
 	],
 	deps=[
 		":utils",

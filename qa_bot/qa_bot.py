@@ -1,20 +1,10 @@
 # System Imports
-import json
-import sys
 from typing import List
 
 # Third Party Imports
 from openai import OpenAI
 
 # Package Imports
-from data_api.utils.gcs_utils import (
-	download_textfile_as_string_gcs,
-	list_files_gcs,
-)
-from data_api.utils.file_utils import create_temp_local_directory
-from data_api.utils.paths import Paths
-from google_client_provider import GoogleClientProvider
-from podcasts import PODCASTS
 from data_api.embeddings.vector_db import DatabaseMatch, VectorDB
 
 class QABot:
@@ -22,8 +12,7 @@ class QABot:
 	client = OpenAI()
 	GPT_MODEL = "gpt-4-0125-preview"
 
-	def __init__(self, gc_provider: GoogleClientProvider):
-		self.gc_provider = gc_provider
+	def __init__(self):
 		self.system_prompt = 'You answer the user\'s questions based on the provided context.'
 		self.k = 4
 
@@ -33,7 +22,7 @@ class QABot:
 		}
 
 		print("Loading vector database.")
-		self.vector_db = VectorDB(self.gc_provider)
+		self.vector_db = VectorDB()
 
 		self.base_prompt = """
 		The following is a set of chapters from transcribed podcasts.

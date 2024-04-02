@@ -10,14 +10,8 @@ from data_api.audio_download.audio_downloader import (
 	CHAPTERS_KEY,
 	GUEST_KEY,
 )
-from data_api.utils.gcs_utils import (
-	download_textfile_as_string_gcs,
-	file_exists_gcs,
-	list_files_gcs,
-	upload_string_as_textfile_gcs,
-)
+from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
-from google_client_provider import GoogleClientProvider
 
 SENTENCE_END_PUNCTUATIONS = ['.', '?', '!']
 
@@ -222,8 +216,7 @@ def convert_timestamp_string_to_milliseconds(timestamp_string: str) -> int:
 
 class TranscriptChapterizer:
 
-	def __init__(self, gc_provider: GoogleClientProvider, podcast_name: str, podcast_host: str):
-		self.gc_provider = gc_provider
+	def __init__(self, podcast_name: str, podcast_host: str):
 		self.podcast_name = podcast_name
 		self.podcast_host = podcast_host
 
@@ -293,21 +286,29 @@ class TranscriptChapterizer:
 		"""
 		print("Running chapterization for {}".format(self.podcast_name))
 
-		chapterized_transcripts_folder = Paths.get_chapterized_data_folder(self.podcast_name)
-		chapterized_files = list_files_gcs(self.gc_provider, chapterized_transcripts_folder, Paths.JSON_EXT)
-		for chapterized_file in chapterized_files:
-			if file_exists_gcs(self.gc_provider, chapterized_file):
+		aai_transcripts_folder = Paths.get_aai_transcript_folder(self.podcast_name)
+		aai_transcripts = GCSClient.list_files(aai_transcripts_folder, Paths.JSON_EXT)
+
+		chapterized_data_folder = Paths.get_chapterized_data_folder(self.podcast_name)
+		chapterized_files = GCSClient.list_files(chapterized_data_folder, Paths.JSON_EXT)
+
+		audio_data_folder = Paths.get_audio_data_folder(self.podcast_name)
+		chapters_files = set(GCSClient.list_files(audio_data_folder, Paths.JSON_EXT))
+		for aai_transcript in aai_transcripts:
+			title = Paths.get_title_from_path(aai_transcript)
+
+			chapters_file = Paths.get_chapters_file_path(self.podcast_name, title)
+			if chapters_file not in chapters_files:
 				continue
 
-			title = Paths.get_title_from_path(chapterized_file)
-			chapters_file = Paths.get_chapters_file_path(self.podcast_name, title)
-			if not file_exists_gcs(self.gc_provider, chapters_file):
+			chapterized_file = Paths.get_chapterized_transcript_path(self.podcast_name, title)
+			if chapterized_file in chapterized_files:
 				continue
 
 			print("Chapterizing: {}".format(title))
-			transcript_text = download_textfile_as_string_gcs(self.gc_provider, Paths.get_aai_transcript_path(self.podcast_name, title))
-			chapters_text = download_textfile_as_string_gcs(self.gc_provider, chapters_file)
+			transcript_text = GCSClient.download_textfile_as_string(aai_transcript)
+			chapters_text = GCSClient.download_textfile_as_string(chapters_file)
 
 			chapterized_transcript = self._split_transcript_into_chapters(json.loads(transcript_text), json.loads(chapters_text))
-			upload_string_as_textfile_gcs(self.gc_provider, chapterized_file, json.dumps(chapterized_transcript))
+			GCSClient.upload_string_as_textfile(chapterized_file, json.dumps(chapterized_transcript))
 

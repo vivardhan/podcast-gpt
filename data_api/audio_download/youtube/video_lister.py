@@ -4,10 +4,9 @@ import os
 from typing import List
 
 # Package imports
-from google_client_provider import GoogleClientProvider
+from data_api.utils.youtube_utils import YoutubeUtils
 
-
-def get_all_videos(gc_provider: GoogleClientProvider, channel_id: str) -> List:
+def get_all_videos(channel_id: str) -> List:
     """
     Retrieves a list of video metadata items for a given channel_id
 
@@ -21,11 +20,10 @@ def get_all_videos(gc_provider: GoogleClientProvider, channel_id: str) -> List:
     print("Retrieving videos for channel_id: {}".format(channel_id))
 
     # Find all playlist IDs for the provided channel ID
-    request = gc_provider.youtube_client.channels().list(
+    response = YoutubeUtils.list_playlists(
+        channel_id=channel_id, 
         part="snippet,contentDetails",
-        id=channel_id,
     )
-    response = request.execute()
 
     playlist_ids = []
     for item in response["items"]:
@@ -36,24 +34,13 @@ def get_all_videos(gc_provider: GoogleClientProvider, channel_id: str) -> List:
 
 
     # Extract all videos from each playlist ID
-    page_token = None
     all_videos = []
     for playlist_id in playlist_ids:
-        while True:
-            request = gc_provider.youtube_client.playlistItems().list(
+        all_videos.extend(
+            YoutubeUtils.extract_videos_from_playlist(
+                playlist_id=playlist_id, 
                 part="snippet,contentDetails",
-                playlistId=playlist_id,
-                maxResults=50,
-                pageToken=page_token,
             )
-
-            response = request.execute()
-            all_videos.extend(response["items"])
-
-            if "nextPageToken" in response:
-                page_token = response["nextPageToken"]
-            else:
-                break
-
+        )
 
     return all_videos

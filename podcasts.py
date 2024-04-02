@@ -13,8 +13,7 @@ from data_api.audio_download.feed_config import (
 	YoutubeFeedConfig,
 )
 from data_api.speech_to_text.assembly_ai_transcriber import AudioTranscriber
-from data_api.qa_generator.transcript_chapterizer import TranscriptChapterizer
-from google_client_provider import GoogleClientProvider
+from data_api.chapterizer.transcript_chapterizer import TranscriptChapterizer
 
 @dataclass
 class Podcast:
@@ -29,9 +28,6 @@ class Podcast:
 	# The feed configuration for this podcast's data source
 	feed_config: Union[YoutubeFeedConfig, RSSFeedConfig]
 
-	# Google Client Provider
-	gc_provider: GoogleClientProvider
-
 	# The audio downloader instance
 	audio_downloader: AudioDownloader = field(init=False)
 
@@ -42,9 +38,9 @@ class Podcast:
 	transcript_chapterizer: TranscriptChapterizer = field(init=False)
 
 	def __post_init__(self):
-		self.audio_downloader = DownloaderFactory(self.name, self.feed_config, self.gc_provider)
-		self.audio_transcriber = AudioTranscriber(self.gc_provider, self.name, self.feed_config.audio_extension)
-		self.transcript_chapterizer = TranscriptChapterizer(self.gc_provider, self.name, self.host_name)
+		self.audio_downloader = DownloaderFactory(self.name, self.feed_config)
+		self.audio_transcriber = AudioTranscriber(self.name, self.feed_config.audio_extension)
+		self.transcript_chapterizer = TranscriptChapterizer(self.name, self.host_name)
 
 	def run_data_extraction_pipeline(self):
 		print("Extracting data for: {}".format(self.name))
@@ -58,18 +54,15 @@ class Podcast:
 		# Chapterize transcripts
 		self.transcript_chapterizer.chapterize_all_transcripts()
 
-gc_provider = GoogleClientProvider()
 huberman_lab = Podcast(
 	name="hubermanlab",
 	host_name="Dr. Andrew Huberman",
 	feed_config=hubermanlab_config,
-	gc_provider=gc_provider,
 )
 peterattia_md = Podcast(
 	name="PeterAttiaMD",
 	host_name="Dr. Peter Attia",
 	feed_config=peterattia_config,
-	gc_provider=gc_provider,
 )
 
 PODCASTS = [

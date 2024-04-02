@@ -10,19 +10,19 @@ import feedparser
 # Package Imports
 from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
 from data_api.audio_download.factory import RSSFeedConfig
-from data_api.utils.gcs_utils import file_exists_gcs
+from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
 
 class RSSAudioDownloader(AudioDownloader):
 
 	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
-		if not file_exists_gcs(self.gc_provider, stream.chapters_path):
-			stream.upload_metadata_to_gcs(self.gc_provider)
+		if not GCSClient.file_exists(stream.chapters_path):
+			stream.upload_metadata_to_gcs()
 
-		if not file_exists_gcs(self.gc_provider, stream.audio_path):
+		if not GCSClient.file_exists(stream.audio_path):
 			print("Downloading {}".format(stream.downloaded_name))
 			urlretrieve(stream.url, stream.audio_path)
-			stream.upload_audio_to_gcs(self.gc_provider)
+			stream.upload_audio_to_gcs()
 
 	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
 		# First clean the description by replacing all href tags with the contained text.
@@ -82,8 +82,8 @@ class RSSAudioDownloader(AudioDownloader):
 						break
 
 					if (
-						file_exists_gcs(self.gc_provider, os.path.join(self.audio_folder, file_name)) and
-						file_exists_gcs(self.gc_provider, os.path.join(self.audio_folder, Paths.get_chapters_file_name_for_title(title)))
+						GCSClient.file_exists(os.path.join(self.audio_folder, file_name)) and
+						GCSClient.file_exists(os.path.join(self.audio_folder, Paths.get_chapters_file_name_for_title(title)))
 					):
 						continue
 

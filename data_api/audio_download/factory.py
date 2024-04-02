@@ -9,12 +9,11 @@ from data_api.audio_download.feed_config import (
 )
 from data_api.audio_download.rss.rss_audio_downloader import RSSAudioDownloader
 from data_api.audio_download.youtube.youtube_audio_downloader import YoutubeAudioDownloader
-from google_client_provider import GoogleClientProvider
 
-def DownloaderFactory(name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig], gc_provider: GoogleClientProvider) -> AudioDownloader:
+def DownloaderFactory(name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig]) -> AudioDownloader:
 	if type(config) == YoutubeFeedConfig:
-		return YoutubeAudioDownloader(name, config, gc_provider)
+		return YoutubeAudioDownloader(name, config)
 	elif type(config) == RSSFeedConfig:
-		return RSSAudioDownloader(name, config, gc_provider)
+		return RSSAudioDownloader(name, config)
 	else:
 		raise ValueError("Unknown config type!")

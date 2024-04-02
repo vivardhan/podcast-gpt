@@ -9,11 +9,7 @@ import tiktoken
 from tqdm import tqdm
 
 # Package Imports
-from data_api.utils.gcs_utils import (
-	download_textfile_as_string_gcs,
-    list_files_gcs,
-    upload_string_as_textfile_gcs,
-)
+from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
 from data_api.qa_generator.llm_qa_generator import LLMQAGenerator
 from data_api.qa_generator.gpt4 import GPT4QAGenerator
@@ -44,11 +40,11 @@ def main():
 		for podcast in PODCASTS:
 			chapterized_data_folder = Paths.get_chapterized_data_folder(podcast.name)
 			qa_pairs_folder = Paths.get_qa_pairs_folder(podcast.name)
-			chapterized_files = list_files_gcs(gc_provider, chapterized_data_folder, Paths.JSON_EXT)
+			chapterized_files = GCSClient.list_files(chapterized_data_folder, Paths.JSON_EXT)
 			
 			print("Counting tokens for {}".format(podcast.name))
 			for t in tqdm(chapterized_files):
-				text = download_textfile_as_string_gcs(gc_provider, t)
+				text = GCSClient.download_textfile_as_string(t)
 				chapters_json = json.loads(text)
 				episode_title = Paths.get_title_from_path(t)
 
@@ -104,7 +100,7 @@ def main():
 				# break
 					
 				# output_file_path = os.path.join(qa_pairs_prefix, model_name, t)
-				# upload_string_as_textfile_gcs(output_file_path, json.dumps(qa_pairs))
+				# GCSClient.upload_string_as_textfile(output_file_path, json.dumps(qa_pairs))
 
 if __name__ == "__main__":
     main()

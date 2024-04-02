@@ -15,12 +15,8 @@ from data_api.audio_download.feed_config import (
 	YoutubeFeedConfig,
 )
 from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
-from data_api.utils.gcs_utils import (
-	upload_string_as_textfile_gcs,
-	upload_to_gcs,
-)
+from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
-from google_client_provider import GoogleClientProvider
 
 CHAPTERS_KEY = "chapters"
 GUEST_KEY = "guest"
@@ -69,9 +65,8 @@ class DownloadStream:
 		self.chapters_path = os.path.join(self.folder_path, chapters_file)
 		self.extension = self.downloaded_name[dot_pos + 1:]
 
-	def upload_metadata_to_gcs(self, gc_provider: GoogleClientProvider) -> None:
-		upload_string_as_textfile_gcs(
-			gc_provider, 
+	def upload_metadata_to_gcs(self) -> None:
+		GCSClient.upload_string_as_textfile(
 			self.chapters_path, 
 			json.dumps({
 				GUEST_KEY: self.podcast_guest,
@@ -79,8 +74,8 @@ class DownloadStream:
 			}),
 		)
 
-	def upload_audio_to_gcs(self, gc_provider: GoogleClientProvider) -> None:
-		upload_to_gcs(gc_provider, self.audio_path)
+	def upload_audio_to_gcs(self) -> None:
+		GCSClient.upload_file(self.audio_path)
 
 
 # Abstract class for AudioDownloaders
@@ -89,10 +84,9 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 	openai_client = OpenAI()
 	model_version = "gpt-4-0125-preview"
 
-	def __init__(self, name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig], google_client_provider: GoogleClientProvider):
+	def __init__(self, name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig]):
 		self.config = config
 		self.audio_folder = os.path.join(name, Paths.AUDIO_DATA_FOLDER)
-		self.gc_provider = google_client_provider
 
 	@abc.abstractmethod
 	def download_audio_to_gcs(self, item: DownloadStream) -> None:

@@ -10,14 +10,8 @@ import assemblyai as aai
 
 # Package Imports
 from data_api.utils.file_utils import create_temp_local_directory
-from data_api.utils.gcs_utils import (
-    download_file_gcs,
-    file_exists_gcs, 
-    list_files_gcs, 
-    upload_string_as_textfile_gcs,
-)
+from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
-from google_client_provider import GoogleClientProvider
 
 base_url = "https://api.assemblyai.com/v2/transcript/"
 
@@ -25,15 +19,15 @@ base_url = "https://api.assemblyai.com/v2/transcript/"
 aai.settings.api_key = "9b22f02582ac4fdf892ba609d1080da0"
 headers = {'authorization': aai.settings.api_key}
 
-def download_all_raw_transcript_texts(gc_provider: GoogleClientProvider) -> Dict[str, str]:
+def download_all_raw_transcript_texts() -> Dict[str, str]:
     ret = {}
     for podcast_name in ["hubermanlab", "PeterAttiaMD"]:
         print("Downloading all raw transcripts from gcs for {}".format(podcast_name))
         raw_text_folder = os.path.join(podcast_name, Paths.TEXT_DATA_FOLDER, Paths.RAW_TRANSCRIPT_FOLDER)
         create_temp_local_directory(raw_text_folder)
-        for file_name in list_files_gcs(gc_provider, raw_text_folder, Paths.TXT_EXT):
+        for file_name in GCSClient.list_files(raw_text_folder, Paths.TXT_EXT):
             if not os.path.exists(file_name):
-                download_file_gcs(gc_provider, file_name)
+                GCSClient.download_file(file_name)
             
             curr_text = ""
             with open(file_name, "r") as f:
@@ -69,15 +63,21 @@ def match_aai_transcript_to_gcs_transcript(aai_transcript_text: str, gcs_transcr
 
     return None
 
-def save_assembly_ai_transcript(gc_provider: GoogleClientProvider, transcript: json, file_name: str) -> None:
-    transcript_file_name = file_name.replace(Paths.RAW_TRANSCRIPT_FOLDER, Paths.ASSEMBLY_AI_FOLDER).replace(Paths.TXT_EXT, Paths.JSON_EXT)
-    if file_exists_gcs(gc_provider, transcript_file_name):
+def save_assembly_ai_transcript(transcript: json, file_name: str) -> None:
+    transcript_file_name = file_name.replace(
+        Paths.RAW_TRANSCRIPT_FOLDER, 
+        Paths.ASSEMBLY_AI_FOLDER
+    ).replace(
+        Paths.TXT_EXT, 
+        Paths.JSON_EXT
+    )
+    if GCSClient.file_exists(transcript_file_name):
         print("File already exists, skipping!")
         return
 
-    upload_string_as_textfile_gcs(gc_provider, transcript_file_name, json.dumps(transcript))
+    GCSClient.upload_string_as_textfile(transcript_file_name, json.dumps(transcript))
 
-def process_aai_transcripts(gc_provider: GoogleClientProvider, gcs_transcripts: Dict[str, str]) -> None:
+def process_aai_transcripts(gcs_transcripts: Dict[str, str]) -> None:
     curr_url = "https://api.assemblyai.com/v2/transcript?limit=200&status=completed"
     urls = set()
     while curr_url:
@@ -89,7 +89,7 @@ def process_aai_transcripts(gc_provider: GoogleClientProvider, gcs_transcripts: 
                     file_name = match_aai_transcript_to_gcs_transcript(aai_transcript["text"], gcs_transcripts)
                     if file_name:
                         print("Matched transcript id: {} to file: {}".format(t["id"], file_name))
-                        save_assembly_ai_transcript(gc_provider, aai_transcript, file_name)
+                        save_assembly_ai_transcript(aai_transcript, file_name)
                     else:
                         print("Failed to match transcript id: {} to any gcs file".format(t["id"]))
 
@@ -103,10 +103,9 @@ def process_aai_transcripts(gc_provider: GoogleClientProvider, gcs_transcripts: 
             raise SystemExit(e)
 
 def main():
-    gc_provider = GoogleClientProvider()
-    gcs_transcripts = download_all_raw_transcript_texts(gc_provider)
+    gcs_transcripts = download_all_raw_transcript_texts()
     print("Downloaded {} raw transcripts from GCS".format(len(gcs_transcripts)))
-    process_aai_transcripts(gc_provider, gcs_transcripts)
+    process_aai_transcripts(gcs_transcripts)
 
 if __name__ == "__main__":
     main()
