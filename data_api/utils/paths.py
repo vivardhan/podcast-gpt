@@ -30,7 +30,7 @@ class Paths:
 	def get_audio_path(cls, podcast_name: str, title: str, extension: str) -> str:
 		return os.path.join(
 			cls.get_audio_data_folder(podcast_name), 
-			"{}.{}".format(title, extension)
+			title + extension
 		)
 
 	@classmethod
@@ -41,7 +41,7 @@ class Paths:
 	def get_chapters_json_path(cls, podcast_name: str, title: str) -> str:
 		return os.path.join(
 			cls.get_audio_data_folder(podcast_name), 
-			title + cls.JSON_EXT
+			"{}_{}".format(title, cls.CHAPTERS_SUFFIX) + cls.JSON_EXT
 		)
 
 	@classmethod
