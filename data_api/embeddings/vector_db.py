@@ -65,15 +65,23 @@ class VectorDB:
 		count_exceeds = 0
 		total_chapters = 0
 
-		js = json.loads(GCSClient.download_textfile_as_string(Paths.VECTOR_DB_PATH))	
-		embeddings = js[cls.EMBEDDINGS_FIELD]
-		data = js[cls.DATA_FIELD]
+		js = json.loads(GCSClient.download_textfile_as_string(Paths.VECTOR_DB_PATH))
+		js_embeddings = js[cls.EMBEDDINGS_FIELD]
+		js_data = js[cls.DATA_FIELD]
+
+		embeddings = []
+		data = []
+		for index in range(len(js_data)):
+			if js_data[index][cls.CHAPTER_TRANSCRIPT_FIELD] == '':
+				continue
+
+			embeddings.append(js_embeddings[index])
+			data.append(js_data[index])
 
 		searchable_embeddings = set([
 			d[cls.PODCAST_TITLE_FIELD] + d[cls.EPISODE_TITLE_FIELD] + d[cls.CHAPTER_TITLE_FIELD]
 			for d in data
 		])
-
 
 		for podcast_name in podcast_names:
 			chapterized_data_folder = Paths.get_chapterized_data_folder(podcast_name)
@@ -132,10 +140,11 @@ class VectorDB:
 			payload=database[cls.DATA_FIELD],
 		)
 
-	def get_topk_matches(self, query_string: str, k: int) -> List[DatabaseMatch]:
+	@classmethod
+	def get_topk_matches(cls, query_string: str, k: int) -> List[DatabaseMatch]:
 		query = EmbeddingsGenerator.get_embedding(query_string)
-		neighbors = self.qdrant_client.search(
-			collection_name=self.COLLECTION_NAME,
+		neighbors = cls.qdrant_client.search(
+			collection_name=cls.COLLECTION_NAME,
 			query_vector=query,
 			limit=k,
 		)
@@ -143,10 +152,10 @@ class VectorDB:
 		return [
 			DatabaseMatch(
 				score=n.score,
-				podcast_title=n.payload[EmbeddingsGenerator.PODCAST_TITLE_FIELD],
-				episode_title=n.payload[EmbeddingsGenerator.EPISODE_TITLE_FIELD],
-				chapter_title=n.payload[EmbeddingsGenerator.CHAPTER_TITLE_FIELD],
-				chapter_transcript=n.payload[EmbeddingsGenerator.CHAPTER_TRANSCRIPT_FIELD],
+				podcast_title=n.payload[cls.PODCAST_TITLE_FIELD],
+				episode_title=n.payload[cls.EPISODE_TITLE_FIELD],
+				chapter_title=n.payload[cls.CHAPTER_TITLE_FIELD],
+				chapter_transcript=n.payload[cls.CHAPTER_TRANSCRIPT_FIELD],
 			)
 			for n in neighbors
 		]
