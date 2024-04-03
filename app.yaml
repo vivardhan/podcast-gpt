@@ -5,7 +5,7 @@ env_variables:
   OPENAI_API_KEY: "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"
   QDRANT_API_KEY: "q2ABAu92wxB6z73dTyiuTKFNwH9w4afucpfOhxD317BeWxATE2Ww-Q"
 
-entrypoint: gunicorn main:app --threads 4 --workers 1 -c /config/gunicorn.py
+entrypoint: gunicorn main:app --threads 1 --workers 1 -c /config/gunicorn.py
 
 handlers:
   # This configures Google App Engine to serve the files in the app's static
