@@ -17,14 +17,15 @@
         #chatbox {
         margin-left: auto;
         margin-right: auto;
-        width: 40%;
-        margin-top: 60px;
+        width: 90%;
+        margin-top: auto;
       }
       #userInput {
-        margin-left: auto;
-        margin-right: auto;
-        width: 40%;
+        margin-left: 5%;
+        margin-right: 5%;
+        width: 100%;
         margin-top: 60px;
+        margin-bottom:  10px;
       }
       #textInput {
         width: 90%;
@@ -34,26 +35,26 @@
         font-size: 17px;
       }
       .userText {
-        color: white;
+        color: grey;
         font-family: monospace;
         font-size: 17px;
         text-align: right;
         line-height: 30px;
       }
       .userText span {
-        background-color: #808080;
+        background-color: white;
         padding: 10px;
         border-radius: 2px;
       }
       .botText {
-        color: white;
+        color: black;
         font-family: monospace;
         font-size: 17px;
         text-align: left;
         line-height: 30px;
       }
       .botText span {
-        background-color: #4169e1;
+        background-color: white;
         padding: 10px;
         border-radius: 2px;
       }
@@ -66,17 +67,17 @@
       .boxed {
         margin-left: auto;
         margin-right: auto;
-        width: 78%;
-        margin-top: 60px;
+        width: 90%;
+        margin-top: auto;
         border: 1px solid green;
       }
     </style>
 </head>
 <body>
 <div>
-        <h1 align="center"><b>I answer questions based on 'The HubermanLab Podcast' and 'The Drive' podcast!</b></h1>
+        <h1 align="center"><b>I answer questions based on 'The HubermanLab Podcast' and 'The Peter Attia Drive' podcast!</b></h1>
         <h4 align="center"><b>Please ask your questions!</b></h4>
-        <p align="center"><img src="static\\podcast-gpt.jpeg" alt="Python-BOT" height="210" width="220"></p>
+        <!-- <p align="center"><img src="static\\podcast-gpt.jpeg" alt="Python-BOT" height="210" width="220"></p> -->
         <div class="boxed">
             <div>
                 <div id="chatbox">
@@ -89,6 +90,33 @@
                 </div>
             </div>
             <script>
+                function startStreaming(url, message) {
+                    if (window.EventSource) {
+                        const encodedMessage = encodeURIComponent(JSON.stringify(message));
+                        const urlWithMessage = `${url}?msg=${encodedMessage}`;
+                        const source = new EventSource(urlWithMessage);
+
+                        var botHtml = '<p class="botText"><span>' + "</span></p>";
+                        $("#chatbox").append(botHtml);
+
+                        source.onmessage = function(event) {
+                            const message = JSON.parse(event.data).text;
+                            $("#chatbox p.botText:last-child span").text(function(index, currentText) {
+                                return currentText + message;
+                            });
+                            document
+                                .getElementById("userInput")
+                                .scrollIntoView({ block: "start", behavior: "smooth" });
+                        }
+
+                        source.onerror = function(error) {
+                            console.error("EventSource failed:", error);
+                            source.close();
+                        };
+                    } else {
+                        console.log("SSE Unsupported")
+                    }
+                }
                 function getBotResponse() {
                     var rawText = $("#textInput").val();
                     var userHtml = '<p class="userText"><span>' + rawText + "</span></p>";
@@ -97,13 +125,16 @@
                     document
                         .getElementById("userInput")
                         .scrollIntoView({ block: "start", behavior: "smooth" });
-                    $.get("/get", { msg: rawText }).done(function (data) {
-                        var botHtml = '<p class="botText"><span>' + data + "</span></p>";
-                        $("#chatbox").append(botHtml);
-                        document
-                            .getElementById("userInput")
-                            .scrollIntoView({ block: "start", behavior: "smooth" });
-                    });
+
+                    startStreaming("/get", rawText);
+
+                    // $.get("/get", { msg: rawText }).done(function (data) {
+                    //     var botHtml = '<p class="botText"><span>' + data + "</span></p>";
+                    //     $("#chatbox").append(botHtml);
+                    //     document
+                    //         .getElementById("userInput")
+                    //         .scrollIntoView({ block: "start", behavior: "smooth" });
+                    // });
                 }
                 $("#textInput").keypress(function (e) {
                     if (e.which == 13) {
