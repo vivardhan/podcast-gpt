@@ -21,9 +21,6 @@ class QABot:
 			"PeterAttiaMD": "The Peter Attia Drive Podcast",
 		}
 
-		print("Loading vector database.")
-		self.vector_db = VectorDB()
-
 		self.base_prompt = """
 		The following is a set of chapters from transcribed podcasts.
 		Answer the question that follows them using the information in the chapters.
@@ -54,9 +51,8 @@ class QABot:
 			for match in database_matches
 		] + [question])
 
-	def answer_question(self, question: str) -> str:
-		db_matches = self.vector_db.get_topk_matches(question, self.k)
-		print("matches: {}".format(db_matches))
+	def answer_question(self, question: str) -> None:
+		db_matches = VectorDB.get_topk_matches(question, self.k)
 		return self.client.chat.completions.create(
 		    messages=[
 		        {'role': 'system', 'content': self.system_prompt},
@@ -64,10 +60,12 @@ class QABot:
 		    ],
 		    model=self.GPT_MODEL,
 		    temperature=0,
-		).choices[0].message.content
+		    stream=True,
+		)
+
 
 	def answer_questions(self):
-		print("Hello, I answer questions based on 'The Huberman Lab Podcast' and 'The Drive Podcast'.")
+		print("Hello, I answer questions based on 'The Huberman Lab Podcast' and 'The Peter Attia Drive Podcast'.")
 		print("When prompted, type your question and hit enter and I'll attempt to answer it.")
 		print("Once you're done, just type '{}' and hit enter.".format(self.quit_string))
 
@@ -77,4 +75,11 @@ class QABot:
 				print("Thanks, bye!")
 				break
 
-			print(self.answer_question(curr_question))
+			response = self.answer_question(curr_question)
+			print(type(response))
+			for chunk in response:
+				content = chunk.choices[0].delta.content
+				if content:
+					print(content, end='')
+				else:
+					print('')
