@@ -62,7 +62,10 @@ py_library(
 	name="generate_embeddings",
 	srcs=[
 		"data_api/embeddings/embeddings_generator.py",
-		"data_api/embeddings/vector_db.py",
+		"data_api/embeddings/vector_db/constants.py",
+		"data_api/embeddings/vector_db/db_update.py",
+		"data_api/embeddings/vector_db/qdrant_client_provider.py",
+		"data_api/embeddings/vector_db/vector_search.py",
 	],
 )
 

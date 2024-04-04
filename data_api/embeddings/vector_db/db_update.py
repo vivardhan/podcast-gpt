@@ -1,12 +1,10 @@
 # System Imports
-from dataclasses import dataclass
 import json
 import numpy as np
 import os
 from typing import List
 
 # Third Party Imports
-from qdrant_client import QdrantClient
 from qdrant_client.models import (
 	Distance,
 	VectorParams,
@@ -16,27 +14,10 @@ from tqdm import tqdm
 
 # Package Imports
 from data_api.embeddings.embeddings_generator import EmbeddingsGenerator
+from data_api.embeddings.vector_db.constants import VectorDBConstants
+from data_api.embeddings.vector_db.qdrant_client_provider import QdrantClientProvider
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
-
-@dataclass
-class DatabaseMatch:
-	"""Encapsulates one matched row fron a vector DB"""
-
-	# The cosine similarity match score
-	score: float
-
-	# The podcast title
-	podcast_title: str
-
-	# The title of the episode where the text comes from
-	episode_title: str
-
-	# The chapter title within the episode
-	chapter_title: str
-
-	# The chapter transcript
-	chapter_transcript: str
 
 def num_tokens_from_string(string: str, encoding_name: str =  "cl100k_base") -> int:
     """Returns the number of tokens in a text string."""
@@ -44,21 +25,7 @@ def num_tokens_from_string(string: str, encoding_name: str =  "cl100k_base") -> 
     num_tokens = len(encoding.encode(string))
     return num_tokens
 
-class VectorDB:
-
-	qdrant_client = QdrantClient(
-	    url="https://f9b5e12e-96e8-4a0d-92e3-154fad93523a.us-east4-0.gcp.cloud.qdrant.io:6333",
-	    api_key=os.environ["QDRANT_API_KEY"],
-	)
-
-	COLLECTION_NAME = "podcast_gpt_embeddings"
-	EMBEDDINGS_DIMENSION = 1536
-	PODCAST_TITLE_FIELD = "podcast_title"
-	EPISODE_TITLE_FIELD = "episode_title"
-	CHAPTER_TITLE_FIELD = "chapter_title"
-	CHAPTER_TRANSCRIPT_FIELD = "chapter_transcript"
-	EMBEDDINGS_FIELD = "embeddings"
-	DATA_FIELD = "data"
+class DBUpdate:
 
 	@classmethod
 	def generate_and_store_embeddings(cls, podcast_names: List[str]) -> None:
@@ -66,20 +33,22 @@ class VectorDB:
 		total_chapters = 0
 
 		js = json.loads(GCSClient.download_textfile_as_string(Paths.VECTOR_DB_PATH))
-		js_embeddings = js[cls.EMBEDDINGS_FIELD]
-		js_data = js[cls.DATA_FIELD]
+		js_embeddings = js[VectorDBConstants.EMBEDDINGS_FIELD]
+		js_data = js[VectorDBConstants.DATA_FIELD]
 
 		embeddings = []
 		data = []
 		for index in range(len(js_data)):
-			if js_data[index][cls.CHAPTER_TRANSCRIPT_FIELD] == '':
+			if js_data[index][VectorDBConstants.CHAPTER_TRANSCRIPT_FIELD] == '':
 				continue
 
 			embeddings.append(js_embeddings[index])
 			data.append(js_data[index])
 
 		searchable_embeddings = set([
-			d[cls.PODCAST_TITLE_FIELD] + d[cls.EPISODE_TITLE_FIELD] + d[cls.CHAPTER_TITLE_FIELD]
+			d[VectorDBConstants.PODCAST_TITLE_FIELD] +
+			d[VectorDBConstants.EPISODE_TITLE_FIELD] +
+			d[VectorDBConstants.CHAPTER_TITLE_FIELD]
 			for d in data
 		])
 
@@ -106,17 +75,17 @@ class VectorDB:
 
 					embeddings.append(EmbeddingsGenerator.get_embedding(full_text))
 					data.append({
-							cls.PODCAST_TITLE_FIELD: podcast_name,
-							cls.EPISODE_TITLE_FIELD: episode_title,
-							cls.CHAPTER_TITLE_FIELD: chapter_title,
-							cls.CHAPTER_TRANSCRIPT_FIELD: chapter_text,
+							VectorDBConstants.PODCAST_TITLE_FIELD: podcast_name,
+							VectorDBConstants.EPISODE_TITLE_FIELD: episode_title,
+							VectorDBConstants.CHAPTER_TITLE_FIELD: chapter_title,
+							VectorDBConstants.CHAPTER_TRANSCRIPT_FIELD: chapter_text,
 					})
 
 		GCSClient.upload_string_as_textfile( 
 			Paths.VECTOR_DB_PATH, 
 			json.dumps({
-				cls.EMBEDDINGS_FIELD: embeddings,
-				cls.DATA_FIELD: data,
+				VectorDBConstants.EMBEDDINGS_FIELD: embeddings,
+				VectorDBConstants.DATA_FIELD: data,
 			}),
 		)
 
@@ -124,38 +93,18 @@ class VectorDB:
 
 	@classmethod
 	def create_and_deploy_index_and_endpoint(cls):
-		cls.qdrant_client.recreate_collection(
-		    collection_name=cls.COLLECTION_NAME,
+		QdrantClientProvider.client.recreate_collection(
+		    collection_name=VectorDBConstants.COLLECTION_NAME,
 		    vectors_config=VectorParams(
-		    	size=cls.EMBEDDINGS_DIMENSION, 
+		    	size=VectorDBConstants.EMBEDDINGS_DIMENSION, 
 		    	distance=Distance.COSINE,
 		    ),
 		)
 
 		database = json.loads(GCSClient.download_textfile_as_string(Paths.VECTOR_DB_PATH))
 
-		cls.qdrant_client.upload_collection(
-			collection_name=cls.COLLECTION_NAME,
-			vectors=np.array(database[cls.EMBEDDINGS_FIELD]),
-			payload=database[cls.DATA_FIELD],
+		QdrantClientProvider.client.upload_collection(
+			collection_name=VectorDBConstants.COLLECTION_NAME,
+			vectors=np.array(database[VectorDBConstants.EMBEDDINGS_FIELD]),
+			payload=database[VectorDBConstants.DATA_FIELD],
 		)
-
-	@classmethod
-	def get_topk_matches(cls, query_string: str, k: int) -> List[DatabaseMatch]:
-		query = EmbeddingsGenerator.get_embedding(query_string)
-		neighbors = cls.qdrant_client.search(
-			collection_name=cls.COLLECTION_NAME,
-			query_vector=query,
-			limit=k,
-		)
-
-		return [
-			DatabaseMatch(
-				score=n.score,
-				podcast_title=n.payload[cls.PODCAST_TITLE_FIELD],
-				episode_title=n.payload[cls.EPISODE_TITLE_FIELD],
-				chapter_title=n.payload[cls.CHAPTER_TITLE_FIELD],
-				chapter_transcript=n.payload[cls.CHAPTER_TRANSCRIPT_FIELD],
-			)
-			for n in neighbors
-		]

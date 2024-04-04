@@ -5,7 +5,7 @@ from typing import List
 from openai import OpenAI
 
 # Package Imports
-from data_api.embeddings.vector_db import DatabaseMatch, VectorDB
+from data_api.embeddings.vector_db.vector_search import DatabaseMatch, VectorSearch
 
 class QABot:
 
@@ -52,7 +52,7 @@ class QABot:
 		] + [question])
 
 	def answer_question(self, question: str) -> None:
-		db_matches = VectorDB.get_topk_matches(question, self.k)
+		db_matches = VectorSearch.get_topk_matches(question, self.k)
 		return self.client.chat.completions.create(
 		    messages=[
 		        {'role': 'system', 'content': self.system_prompt},
