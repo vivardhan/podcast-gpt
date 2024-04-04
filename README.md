@@ -136,7 +136,7 @@ bazel run //:run_qa_bot
 
 #### 3.1.2 In the browser
 ```bash
-gunicorn main:app
+gunicorn main:app --worker-class gevent --timeout 600
 ```
 Then navigate to the URL that is printed out.
 
@@ -146,6 +146,6 @@ Koyeb is a free web hosting service that integrates with Flask and Github to ser
 In order to redeploy:
 1. Create an account on Koyeb with your github login 
 2. Push your changes to the develop branch of the repo
-3. If you don't see the podcast-gpt project already available, connect it to your account
+3. If you don't see the podcast-gpt project already available in Koyeb, connect it to your account
 4. Navigate to the podcast-gpt app and click on Redeploy.
 5. Monitor the build and deployment process through the UI on Koyeb.
