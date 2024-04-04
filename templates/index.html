@@ -4,6 +4,7 @@
     <title>Podcast-GPT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.1/dist/showdown.min.js"></script>
     <style>
         * {
             box-sizing: border-box
@@ -86,7 +87,7 @@
                     </p>
                 </div>
                 <div id="userInput">
-                    <input id="textInput" type="text" name="msg" placeholder="Message" />
+                    <input id="textInput" type="text" name="msg" placeholder="Type your question and hit enter:" />
                 </div>
             </div>
             <script>
@@ -95,18 +96,24 @@
                         const encodedMessage = encodeURIComponent(JSON.stringify(message));
                         const urlWithMessage = `${url}?msg=${encodedMessage}`;
                         const source = new EventSource(urlWithMessage);
+                        var converter = new showdown.Converter();
 
                         var botHtml = '<p class="botText"><span>' + "</span></p>";
                         $("#chatbox").append(botHtml);
 
+                        var full_text = "";
+
                         source.onmessage = function(event) {
                             const message = JSON.parse(event.data).text;
-                            $("#chatbox p.botText:last-child span").text(function(index, currentText) {
-                                return currentText + message;
-                            });
-                            document
-                                .getElementById("userInput")
-                                .scrollIntoView({ block: "start", behavior: "smooth" });
+                            if (message === null) {
+                                console.log("End of message");
+                            } else {
+                                full_text += message;
+                                $("#chatbox p.botText:last-child span").html(converter.makeHtml(full_text));
+                                document
+                                    .getElementById("userInput")
+                                    .scrollIntoView({ block: "start", behavior: "smooth" });
+                            }
                         }
 
                         source.onerror = function(error) {
