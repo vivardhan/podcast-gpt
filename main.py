@@ -19,8 +19,7 @@ def generate_response(user_text: str):
     response = podcast_gpt.answer_question(user_text)
     for chunk in response:
         content = chunk.choices[0].delta.content
-        if content:
-            yield f"data: {json.dumps({'text': content})}\n\n"
+        yield f"data: {json.dumps({'text': content})}\n\n"
 
 @app.route("/get")
 def get_bot_response():    
