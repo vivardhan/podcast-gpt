@@ -1,11 +1,12 @@
 # System Imports
 import os
 import re
+import requests
 from typing import List, Tuple
-from urllib.request import urlretrieve
 
 # Third Party Imports
 import feedparser
+from tqdm import tqdm
 
 # Package Imports
 from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
@@ -16,12 +17,20 @@ from data_api.utils.paths import Paths
 class RSSAudioDownloader(AudioDownloader):
 
 	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
-		if not GCSClient.file_exists(stream.chapters_path):
+		if not GCSClient.file_exists(stream.metadata_path):
 			stream.upload_metadata_to_gcs()
 
+		folder, file = os.path.split(stream.audio_path)
+		
 		if not GCSClient.file_exists(stream.audio_path):
-			print("Downloading {}".format(stream.downloaded_name))
-			urlretrieve(stream.url, stream.audio_path)
+			print("Downloading {}".format(file))
+			try:
+				r = requests.get(stream.url)
+				with open(stream.audio_path, 'wb') as f:
+					f.write(r.content)
+			except Exception as e:
+				print('Could not download: {}: {}'.format(stream.audio_path, e))
+
 			stream.upload_audio_to_gcs()
 
 	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
@@ -71,19 +80,21 @@ class RSSAudioDownloader(AudioDownloader):
 		feed = feedparser.parse(self.config.url)
 		print("Checking {} RSS entries ... ".format(len(feed.entries)))
 
-		for entry in feed.entries:
+		audio_files = set(GCSClient.list_files(self.audio_folder, self.config.audio_extension))
+		metadata_files = set(GCSClient.list_files(self.audio_folder, Paths.JSON_EXT))
+
+		for entry in tqdm(feed.entries):
 			chapters = self.extract_chapters(entry.content[0].value)
 			for link in entry.links:
 				if self.config.audio_extension in link.href:
 					title = entry.title.replace('/', '')
-					file_name = "{}.{}".format(title, self.config.audio_extension)
 					
-					if any([f in file_name for f in self.config.filter_out]):
+					if any([f in title for f in self.config.filter_out]):
 						break
 
 					if (
-						GCSClient.file_exists(os.path.join(self.audio_folder, file_name)) and
-						GCSClient.file_exists(os.path.join(self.audio_folder, Paths.get_chapters_file_name_for_title(title)))
+						Paths.get_audio_path(self.name, title, self.config.audio_extension) in audio_files and
+						Paths.get_metadata_file_path(self.name, title) in metadata_files
 					):
 						continue
 
@@ -91,11 +102,13 @@ class RSSAudioDownloader(AudioDownloader):
 						guest = self.extract_guest(title)
 						files_to_download.append(
 							DownloadStream(
+								podcast_name=self.name,
 								url=link.href, 
-								folder_path=self.audio_folder, 
-								downloaded_name=file_name,
+								folder_path=self.audio_folder,
+								episode_title=title,
 								chapters=chapters,
 								podcast_guest=guest,
+								extension=self.config.audio_extension,
 							)
 						)
 

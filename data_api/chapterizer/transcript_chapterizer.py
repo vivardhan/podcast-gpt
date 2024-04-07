@@ -6,10 +6,7 @@ import os
 from typing import Dict, List, Optional
 
 # Package Imports
-from data_api.audio_download.audio_downloader import (
-	CHAPTERS_KEY,
-	GUEST_KEY,
-)
+from data_api.audio_download.audio_downloader import MetadataKeys
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
 
@@ -228,16 +225,17 @@ class TranscriptChapterizer:
 			assembly_ai_transcript: 
 				The raw transcript from assembly AI in json format
 			metadata: 
-				json formated metadata. there are two keys:
+				json formated metadata. with the following information:
 					guest: The name of the podcast guest (or None) if there is no guest
 					chapters: list of (timestamp, title) pairs describing chapters
+					
 
 		returns:
 			Dictionary that maps chapter titles to transcript text for the chapter
 
 		"""
-		podcast_guest = metadata[GUEST_KEY]
-		chapters = metadata[CHAPTERS_KEY]
+		podcast_guest = metadata[MetadataKeys.GUEST_KEY]
+		chapters = metadata[MetadataKeys.CHAPTERS_KEY]
 		chapter_transcripts = {}
 		words_list = assembly_ai_transcript["words"]
 		num_speakers = count_num_speakers(words_list)
@@ -293,12 +291,12 @@ class TranscriptChapterizer:
 		chapterized_files = GCSClient.list_files(chapterized_data_folder, Paths.JSON_EXT)
 
 		audio_data_folder = Paths.get_audio_data_folder(self.podcast_name)
-		chapters_files = set(GCSClient.list_files(audio_data_folder, Paths.JSON_EXT))
+		metadata_files = set(GCSClient.list_files(audio_data_folder, Paths.METADATA_SUFFIX + Paths.JSON_EXT))
 		for aai_transcript in aai_transcripts:
 			title = Paths.get_title_from_path(aai_transcript)
 
-			chapters_file = Paths.get_chapters_file_path(self.podcast_name, title)
-			if chapters_file not in chapters_files:
+			metadata_file = Paths.get_metadata_file_path(self.podcast_name, title)
+			if metadata_file not in metadata_files:
 				continue
 
 			chapterized_file = Paths.get_chapterized_transcript_path(self.podcast_name, title)
@@ -307,8 +305,8 @@ class TranscriptChapterizer:
 
 			print("Chapterizing: {}".format(title))
 			transcript_text = GCSClient.download_textfile_as_string(aai_transcript)
-			chapters_text = GCSClient.download_textfile_as_string(chapters_file)
+			metadata_text = GCSClient.download_textfile_as_string(metadata_file)
 
-			chapterized_transcript = self._split_transcript_into_chapters(json.loads(transcript_text), json.loads(chapters_text))
+			chapterized_transcript = self._split_transcript_into_chapters(json.loads(transcript_text), json.loads(metadata_text))
 			GCSClient.upload_string_as_textfile(chapterized_file, json.dumps(chapterized_transcript))
 

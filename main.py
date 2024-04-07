@@ -16,10 +16,12 @@ def home():
     return render_template("index.html")
 
 def generate_response(user_text: str):
-    response = podcast_gpt.answer_question(user_text)
+    db_matches, response = podcast_gpt.answer_question(user_text)
     for chunk in response:
         content = chunk.choices[0].delta.content
-        yield f"data: {json.dumps({'text': content})}\n\n"
+        yield f"data: {json.dumps({'type': 'chunk', 'text': content})}\n\n"
+
+    yield f"data: {json.dumps({'type': 'db_matches', 'matches': [m.to_dict() for m in db_matches]})}\n\n"
 
 @app.route("/get")
 def get_bot_response():    

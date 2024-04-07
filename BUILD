@@ -18,7 +18,7 @@ py_library(
 		"data_api/utils/youtube_utils.py",
 	],
 	deps=[
-		"//:google_utils",
+		":google_utils",
 	]
 )
 

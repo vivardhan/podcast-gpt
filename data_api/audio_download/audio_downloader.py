@@ -1,6 +1,6 @@
 # System Imports
 import abc
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 import json
 import os
@@ -18,12 +18,17 @@ from data_api.utils.file_utils import create_temp_local_directory, delete_temp_l
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
 
-CHAPTERS_KEY = "chapters"
-GUEST_KEY = "guest"
+class MetadataKeys:
+	CHAPTERS_KEY = "chapters"
+	GUEST_KEY = "guest"
+	URL_KEY = "url"
 
 @dataclass
 class DownloadStream:
 	# Encapsulates information required to download from an audio stream
+
+	# Name of the podcast
+	podcast_name: str
 
 	# URL with stream
 	url: str
@@ -31,8 +36,8 @@ class DownloadStream:
 	# The local folder to download to
 	folder_path: str
 
-	# The file name to download audio to
-	downloaded_name: str
+	# The episode title
+	episode_title: str
 
 	# Information about chapters in the audio
 	# Each element of the list is a pair with timestamp and chapter name
@@ -45,32 +50,26 @@ class DownloadStream:
 	# Podcast guest
 	podcast_guest: Optional[str]
 
-	# The remaining fields are path related and should not be initialized
-	# They are computed during __post_init__()
+	# The audio extension
+	extension: str
 
-	# Path to the downloaded audio file
+	# The audio file path
 	audio_path: str = field(init=False)
 
-	# Path to the downloaded chapters file
-	chapters_path: str = field(init=False)
-
-	# The audio extension extracted
-	extension: str = field(init=False)
+	# The metadata file path
+	metadata_path: str = field(init=False)
 
 	def __post_init__(self):
-		self.audio_path = os.path.join(self.folder_path, self.downloaded_name)
-		dot_pos = self.downloaded_name.rfind('.')
-		title = self.downloaded_name[:dot_pos]
-		chapters_file = Paths.get_chapters_file_name_for_title(title)
-		self.chapters_path = os.path.join(self.folder_path, chapters_file)
-		self.extension = self.downloaded_name[dot_pos + 1:]
+		self.audio_path = Paths.get_audio_path(self.podcast_name, self.episode_title, self.extension)
+		self.metadata_path = Paths.get_metadata_file_path(self.podcast_name, self.episode_title)
 
 	def upload_metadata_to_gcs(self) -> None:
 		GCSClient.upload_string_as_textfile(
-			self.chapters_path, 
+			self.metadata_path,
 			json.dumps({
-				GUEST_KEY: self.podcast_guest,
-				CHAPTERS_KEY: self.chapters,
+				MetadataKeys.GUEST_KEY: self.podcast_guest,
+				MetadataKeys.URL_KEY: self.url,
+				MetadataKeys.CHAPTERS_KEY: self.chapters,
 			}),
 		)
 
@@ -85,8 +84,9 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 	model_version = "gpt-4-0125-preview"
 
 	def __init__(self, name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig]):
+		self.name = name
 		self.config = config
-		self.audio_folder = os.path.join(name, Paths.AUDIO_DATA_FOLDER)
+		self.audio_folder = Paths.get_audio_data_folder(name)
 
 	@abc.abstractmethod
 	def download_audio_to_gcs(self, item: DownloadStream) -> None:

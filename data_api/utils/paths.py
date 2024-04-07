@@ -12,7 +12,7 @@ class Paths:
 	TXT_EXT = ".txt"
 	JSON_EXT = ".json"
 	VECTOR_DB_PATH = "vector_db" + JSON_EXT
-	CHAPTERS_SUFFIX = "chapters"
+	METADATA_SUFFIX = "metadata"
 	CHAPTERIZED_DATA_FOLDER = "chapterized_data"
 
 	@classmethod
@@ -30,19 +30,12 @@ class Paths:
 	def get_audio_path(cls, podcast_name: str, title: str, extension: str) -> str:
 		return os.path.join(
 			cls.get_audio_data_folder(podcast_name), 
-			title + extension
+			f"{title}.{extension}",
 		)
 
 	@classmethod
 	def get_text_data_folder(cls, podcast_name: str) -> str:
 		return os.path.join(podcast_name, cls.TEXT_DATA_FOLDER)
-
-	@classmethod
-	def get_chapters_json_path(cls, podcast_name: str, title: str) -> str:
-		return os.path.join(
-			cls.get_audio_data_folder(podcast_name), 
-			"{}_{}".format(title, cls.CHAPTERS_SUFFIX) + cls.JSON_EXT
-		)
 
 	@classmethod
 	def get_aai_transcript_folder(cls, podcast_name: str) -> str:
@@ -101,16 +94,16 @@ class Paths:
 		)
 
 	@classmethod
-	def get_chapters_file_name_for_title(cls, title: str) -> str:
+	def get_metadata_file_name_for_title(cls, title: str) -> str:
 		# Gets the file name (not full path) for a given episode title
-		return "{}_{}{}".format(title, cls.CHAPTERS_SUFFIX, cls.JSON_EXT)
+		return "{}_{}{}".format(title, cls.METADATA_SUFFIX, cls.JSON_EXT)
 
 	@classmethod
-	def get_chapters_file_path(cls, podcast_name: str, title: str) -> str:
-		# Gets the full path for the chapters file for a given episode
+	def get_metadata_file_path(cls, podcast_name: str, title: str) -> str:
+		# Gets the full path for the metadata file for a given episode
 		return os.path.join(
 			cls.get_audio_data_folder(podcast_name), 
-			cls.get_chapters_file_name_for_title(title)
+			cls.get_metadata_file_name_for_title(title)
 		)
 
 	@classmethod

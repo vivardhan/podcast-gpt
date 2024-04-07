@@ -16,11 +16,6 @@ class QABot:
 		self.system_prompt = 'You answer the user\'s questions based on the provided context.'
 		self.k = 4
 
-		self.podcast_name_to_title = {
-			"hubermanlab": "Huberman Lab Podcast",
-			"PeterAttiaMD": "The Peter Attia Drive Podcast",
-		}
-
 		self.base_prompt = """
 		The following is a set of chapters from transcribed podcasts.
 		Answer the question that follows them using the information in the chapters.
@@ -43,7 +38,7 @@ class QABot:
 			{}
 			""".format(
 				self.base_prompt,
-				self.podcast_name_to_title[match.podcast_title], 
+				VectorSearch.podcast_name_to_title[match.podcast_title], 
 				match.episode_title, 
 				match.chapter_title, 
 				match.chapter_transcript,
@@ -53,7 +48,7 @@ class QABot:
 
 	def answer_question(self, question: str) -> None:
 		db_matches = VectorSearch.get_topk_matches(question, self.k)
-		return self.client.chat.completions.create(
+		return db_matches, self.client.chat.completions.create(
 		    messages=[
 		        {'role': 'system', 'content': self.system_prompt},
 		        {'role': 'user', 'content': self.construct_prompt(question, db_matches)},
@@ -75,8 +70,7 @@ class QABot:
 				print("Thanks, bye!")
 				break
 
-			response = self.answer_question(curr_question)
-			print(type(response))
+			_, response = self.answer_question(curr_question)
 			for chunk in response:
 				content = chunk.choices[0].delta.content
 				if content:

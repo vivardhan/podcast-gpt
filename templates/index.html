@@ -91,6 +91,31 @@
                 </div>
             </div>
             <script>
+                function createMediaEmbedding(url, start, end) {
+                    if (url.includes('youtube')) {
+                        var full_url = url.replace('watch?v=', 'embed/').replace('youtube', 'youtube-nocookie');
+                        full_url += '?start=' + start;
+                        if (end !== null) {
+                            full_url += '&amp;end=' + end + ';';
+                        }
+                        return '<iframe width="420" height="315" src=' + full_url + '></iframe>';
+                    } else {
+                        var timestamp_str = '#t=' + start;
+                        if (end !== null) {
+                            timestamp_str += ',' + end;
+                        }
+                        return '<audio controls><source src=' + url + timestamp_str + ' type="audio/mp3"></audio>';
+                    }
+                }
+                function createMediaHTML(match) {
+                    const podcast = '<p class="botText"><b>Podcast</b>: ' + match.podcast_title + '</p>';
+                    const title = '<p class="botText"><b>Episode</b>: ' + match.episode_title + '</p>';
+                    const chapter = '<p class="botText"><b>Chapter</b>: ' + match.chapter_title + '</p>';
+                    const relevance = '<p class="botText"><b>Relevance</b>: ' + (match.score * 100).toFixed(2) + '%</p>';
+                    const media_embedding =  createMediaEmbedding(match.episode_url, match.start_timestamp, match.end_timestamp);
+                    return '<div>' + podcast + title + chapter + relevance + media_embedding + '<br></div>';
+                }
+
                 function startStreaming(url, message) {
                     if (window.EventSource) {
                         const encodedMessage = encodeURIComponent(JSON.stringify(message));
@@ -104,16 +129,28 @@
                         var full_text = "";
 
                         source.onmessage = function(event) {
-                            const message = JSON.parse(event.data).text;
-                            if (message === null) {
-                                console.log("End of message");
-                            } else {
-                                full_text += message;
-                                $("#chatbox p.botText:last-child span").html(converter.makeHtml(full_text));
-                                document
-                                    .getElementById("userInput")
-                                    .scrollIntoView({ block: "start", behavior: "smooth" });
+                            const data = JSON.parse(event.data);
+                            if (data.type === 'db_matches') {
+                                console.log('db matches');
+                                const matches = data.matches;
+                                $("#chatbox").append('<p class="botText"><b><u>References:</u></b></p>');
+                                for (let i = 0; i < matches.length; i++) {
+                                    console.log(matches[i].episode_url);
+                                    $("#chatbox").append(createMediaHTML(matches[i]));
+                                }
+                            } else if (data.type === 'chunk') {
+
+                                const message = data.text
+                                if (message === null) {
+                                    console.log("End of message");
+                                } else {
+                                    full_text += message;
+                                    $("#chatbox p.botText:last-child span").html(converter.makeHtml(full_text));
+                                }
                             }
+                            document
+                                .getElementById("userInput")
+                                .scrollIntoView({ block: "start", behavior: "smooth" });
                         }
 
                         source.onerror = function(error) {
