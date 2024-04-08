@@ -68,7 +68,7 @@
       .boxed {
         margin-left: auto;
         margin-right: auto;
-        width: 90%;
+        width:  90%;
         margin-top: auto;
         border: 1px solid green;
       }
@@ -76,8 +76,7 @@
 </head>
 <body>
 <div>
-        <h1 align="center"><b>I answer questions based on 'The HubermanLab Podcast' and 'The Peter Attia Drive' podcast!</b></h1>
-        <h4 align="center"><b>Please ask your questions!</b></h4>
+        <h3 align="center"><b>I answer questions based on <a href="https://www.hubermanlab.com/podcast" target="_blank" rel="noopener noreferrer">'Huberman Lab Podcast'</a> and <a href="https://peterattiamd.com/podcast/" target="_blank" rel="noopener noreferrer">'The Peter Attia Drive podcast!'</a></b></h3>
         <!-- <p align="center"><img src="static\\podcast-gpt.jpeg" alt="Python-BOT" height="210" width="220"></p> -->
         <div class="boxed">
             <div>
@@ -108,12 +107,9 @@
                     }
                 }
                 function createMediaHTML(match) {
-                    const podcast = '<p class="botText"><b>Podcast</b>: ' + match.podcast_title + '</p>';
-                    const title = '<p class="botText"><b>Episode</b>: ' + match.episode_title + '</p>';
-                    const chapter = '<p class="botText"><b>Chapter</b>: ' + match.chapter_title + '</p>';
-                    const relevance = '<p class="botText"><b>Relevance</b>: ' + (match.score * 100).toFixed(2) + '%</p>';
+                    const description = '<p class="botText"><b>Podcast</b>: ' + match.podcast_title + '<br><b>Episode</b>: ' + match.episode_title + '<br><b>Chapter</b>: ' + match.chapter_title + '<br><b>Relevance</b>: ' + (match.score * 100).toFixed(2) + '%</p>';
                     const media_embedding =  createMediaEmbedding(match.episode_url, match.start_timestamp, match.end_timestamp);
-                    return '<div>' + podcast + title + chapter + relevance + media_embedding + '<br></div>';
+                    return '<div>' + description + media_embedding + '</div><br>';
                 }
 
                 function startStreaming(url, message) {
@@ -133,7 +129,7 @@
                             if (data.type === 'db_matches') {
                                 console.log('db matches');
                                 const matches = data.matches;
-                                $("#chatbox").append('<p class="botText"><b><u>References:</u></b></p>');
+                                $("#chatbox").append('<p class="botText"><b><u>References:</u></b><br>(Note: All media, when played, will automatically start and stop at the correct start and stop times for the given chapter.)</p>');
                                 for (let i = 0; i < matches.length; i++) {
                                     console.log(matches[i].episode_url);
                                     $("#chatbox").append(createMediaHTML(matches[i]));
