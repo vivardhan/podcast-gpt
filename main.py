@@ -17,6 +17,7 @@ def home():
 
 def generate_response(user_text: str):
     db_matches, response = podcast_gpt.answer_question(user_text)
+    yield f"data: {json.dumps({'type': 'i_dont_know', 'text': podcast_gpt.I_DONT_KNOW})}\n\n"
     for chunk in response:
         content = chunk.choices[0].delta.content
         yield f"data: {json.dumps({'type': 'chunk', 'text': content})}\n\n"

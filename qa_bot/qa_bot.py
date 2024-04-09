@@ -11,14 +11,17 @@ class QABot:
 
 	client = OpenAI()
 	GPT_MODEL = "gpt-4-0125-preview"
+	I_DONT_KNOW = "Sorry, the podcasts do not cover this topic."
 
 	def __init__(self):
 		self.system_prompt = 'You answer the user\'s questions based on the provided context.'
 		self.k = 4
 
-		self.base_prompt = """
-		The following is a set of chapters from transcribed podcasts.
-		Answer the question that follows them using the information in the chapters.
+		self.base_prompt = f"""
+		The following is a set of discussions from podcasts that may be helpful in answering a question.
+		If none of the discussions are relevant to the question that follows, answer exactly as follows:
+		{self.I_DONT_KNOW}
+		Otherwise, answer the question using the discussion in the podcasts.
 		Provide detailed, factually accurate and thorough answers.
 		Quote the speakers of the podcast liberally when it helps answer the question better.
 		Refer to speakers in the podcast in the third person.

@@ -68,7 +68,7 @@
       .boxed {
         margin-left: auto;
         margin-right: auto;
-        width:  90%;
+        width:  90%;29980
         margin-top: auto;
         border: 1px solid green;
       }
@@ -123,23 +123,23 @@
                         $("#chatbox").append(botHtml);
 
                         var full_text = "";
+                        var i_dont_know = "";
 
                         source.onmessage = function(event) {
                             const data = JSON.parse(event.data);
-                            if (data.type === 'db_matches') {
-                                console.log('db matches');
-                                const matches = data.matches;
-                                $("#chatbox").append('<p class="botText"><b><u>References:</u></b><br>(Note: All media, when played, will automatically start and stop at the correct start and stop times for the given chapter.)</p>');
-                                for (let i = 0; i < matches.length; i++) {
-                                    console.log(matches[i].episode_url);
-                                    $("#chatbox").append(createMediaHTML(matches[i]));
+                            if (data.type === 'i_dont_know') {
+                                i_dont_know = data.text;
+                            } else if (data.type === 'db_matches') {
+                                if (full_text !== i_dont_know) {
+                                    const matches = data.matches;
+                                    $("#chatbox").append('<p class="botText"><b><u>References:</u></b><br>(Note: All media, when played, will automatically start and stop at the correct start and stop times for the given chapter.)</p>');
+                                    for (let i = 0; i < matches.length; i++) {
+                                        $("#chatbox").append(createMediaHTML(matches[i]));
+                                    }
                                 }
                             } else if (data.type === 'chunk') {
-
                                 const message = data.text
-                                if (message === null) {
-                                    console.log("End of message");
-                                } else {
+                                if (message !== null) {
                                     full_text += message;
                                     $("#chatbox p.botText:last-child span").html(converter.makeHtml(full_text));
                                 }
