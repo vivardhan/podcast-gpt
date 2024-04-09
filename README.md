@@ -74,6 +74,20 @@ echo $OPENAI_API_KEY
 ```
 It should print out your API key.
 
+##### 1.1.5.2 qdrant Credentials
+1. Contact Vivardhan Kanoria (vivardhan@gmail.com) to obtain the qdrant API key for this project.
+2. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
+`export QDRANT_API_KEY=[YOUR_API_KEY]`
+3. Then execute:
+```bash
+source ~/.bash_profile
+```
+4. Verify that the key is now available by executing:
+```bash
+echo $OPENAI_API_KEY
+```
+It should print out your API key.
+
 ### 1.2 Future Setup
 
 #### 1.2.1 Activating your virtual environment
@@ -88,8 +102,8 @@ Once done working on the repo, run:
 deactivate
 ```
 
-#### 1.2.3 Resolving OpenAI API Key Errors:
-You may run into issues if python cannot find your OpenAI credentials in the environment variables. Rerun steps 3 and 4 from section 1.1.5.2 to resolve this.
+#### 1.2.3 Resolving OpenAI API Key or qdrant API Key Errors:
+You may run into issues if python cannot find your OpenAI credentials or qdrant credentials in the environment variables. Rerun steps 3 and 4 from section 1.1.5.2 or 1.1.5.3 to resolve this.
 
 ## 2. Data API
 The data API supports the following functionality.
