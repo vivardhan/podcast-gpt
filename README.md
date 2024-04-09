@@ -84,7 +84,7 @@ source ~/.bash_profile
 ```
 4. Verify that the key is now available by executing:
 ```bash
-echo $OPENAI_API_KEY
+echo $QDRANT_API_KEY
 ```
 It should print out your API key.
 
