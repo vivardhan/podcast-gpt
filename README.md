@@ -105,6 +105,16 @@ deactivate
 #### 1.2.3 Resolving OpenAI API Key or qdrant API Key Errors:
 You may run into issues if python cannot find your OpenAI credentials or qdrant credentials in the environment variables. Rerun steps 3 and 4 from section 1.1.5.2 or 1.1.5.3 to resolve this.
 
+#### Resolving dependency errors
+If you get python import errors, use the following steps to resolve the error:
+1. Make sure your virtual environment is enabled (section 1.2.1)
+2. Re-run dependency installation (section 1.1.4.1)
+3. Ensure that any missing dependencies are installed with python3 -m pip install [dependency_name]
+4. Add any newly installed dependencies to requirements.txt as follows (see [https://stackoverflow.com/questions/62885911/pip-freeze-creates-some-weird-path-instead-of-the-package-version](stackoverflow) for why this particular command is used). Please make sure you don't push unused dependencies into the requirements file though!
+```bash
+python3 -m pip list --format=freeze > requirements.txt
+```
+
 ## 2. Data API
 The data API supports the following functionality.
 
