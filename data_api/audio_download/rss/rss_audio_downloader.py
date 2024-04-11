@@ -33,47 +33,6 @@ class RSSAudioDownloader(AudioDownloader):
 
 			stream.upload_audio_to_gcs()
 
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
-		# First clean the description by replacing all href tags with the contained text.
-		# Eg. '<a href= "2021-05-11%2003:15:00%20EDT">3:15</a>' will be replaced by '3:15'
-		href_pattern = '(\<a href\=.*?\>)(.*?)(\<\/a\>)'
-		nohrefs = re.sub(href_pattern, r'\g<2>', description)
-
-		# See https://stackoverflow.com/questions/8318236/regex-pattern-for-hhmmss-time-string
-		# timestamp_pattern = '?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)([0-5]?\d'
-		# The minor modification from the Stackoverflow post is to remove the optionality of the minute block
-		# i.e. at least one colon is required.
-
-		# The pattern is expected to be a list of <li> </li> tags, with the contained text as follows:
-		# "chapter title [hh:mm:ss]"
-		# There are some exceptions to this, which are accounted for i.e.:
-		# 1. The opening <li> tag might have some additional attributes
-		# 2. The square brackets around the timestamp may be parentheses instead
-		# 3. There may be some additional text within the brackets containing the timestamp (before or after hh:mm:ss)
-		# 4. The timestamp may be truncated, eg. 1:45 or 3:24;17 or 00:1:30 - see the comment above for the pattern
-		pattern = '(\<li.*?\>)(.*?[\[|\(].*?)(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)([0-5]?\d)(.*?[\]|\)].*?\<\/li\>)'
-		matches = re.findall(pattern, nohrefs)
-
-		chapters = []
-		for m in matches:
-			timestamp = m[4] # seconds
-			if not m[3] == '':
-				timestamp = m[3] + ':' + timestamp
-
-			if not m[2] == '':
-				timestamp = m[2] + ':' + timestamp
-
-			chapters.append(
-				(
-					timestamp,
-					# The description is the 1st group
-					# Remove the open bracket and strip whitespace
-					m[1][:-1].strip(),
-				)
-			)
-
-		return chapters
-
 	def find_audios_to_download(self) -> List[DownloadStream]:
 		files_to_download = []
 
@@ -84,7 +43,7 @@ class RSSAudioDownloader(AudioDownloader):
 		metadata_files = set(GCSClient.list_files(self.audio_folder, Paths.JSON_EXT))
 
 		for entry in tqdm(feed.entries):
-			chapters = self.extract_chapters(entry.content[0].value)
+			chapters = self.config.chapter_extractor.extract_chapters(entry.content[0].value)
 			for link in entry.links:
 				if self.config.audio_extension in link.href:
 					title = entry.title.replace('/', '')

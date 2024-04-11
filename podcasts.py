@@ -8,6 +8,7 @@ from data_api.audio_download.audio_downloader import AudioDownloader
 from data_api.audio_download.factory import DownloaderFactory
 from data_api.audio_download.feed_config import (
 	hubermanlab_config,
+	lexfridman_config,
 	peterattia_config,
 	RSSFeedConfig,
 	YoutubeFeedConfig,
@@ -64,8 +65,14 @@ peterattia_md = Podcast(
 	host_name="Dr. Peter Attia",
 	feed_config=peterattia_config,
 )
+lex_fridman = Podcast(
+	name="lexfridman",
+	host_name="Lex Fridman",
+	feed_config=lexfridman_config,
+)
 
 PODCASTS = [
 	huberman_lab,
 	peterattia_md,
+	# lex_fridman,
 ]

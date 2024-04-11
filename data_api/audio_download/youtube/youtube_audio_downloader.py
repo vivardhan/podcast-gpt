@@ -44,20 +44,6 @@ class YoutubeAudioDownloader(AudioDownloader):
 
 			stream.upload_audio_to_gcs()
 
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
-		timestamp_str = '\n\nTimestamps'
-		curr_pos = description.find(timestamp_str)
-		if curr_pos == -1:
-			return None
-
-		pattern = '(\n[0-9][0-9]:[0-5][0-9]:[0-5][0-9] )(.*?\n)'
-
-		curr_pos += len(timestamp_str)
-		chapters = re.findall(pattern, description[curr_pos:])
-
-		# Strip away the new line and space characters
-		return [(c[0].strip(), c[1].strip()) for c in chapters]
-
 	def find_audios_to_download(self) -> List[DownloadStream]:
 		videos = get_all_videos(self.config.channel_id)
 
@@ -75,7 +61,7 @@ class YoutubeAudioDownloader(AudioDownloader):
 				continue
 
 
-			chapters = self.extract_chapters(item["snippet"]["description"])
+			chapters = self.config.chapter_extractor.extract_chapters(item["snippet"]["description"])
 
 			# Only download files that have chapter timestamps since those are the ones
 			# that correspond to podcast episodes. Others are likely to be shorts.

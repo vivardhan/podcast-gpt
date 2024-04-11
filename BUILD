@@ -26,6 +26,7 @@ py_library(
 	name="download_audio_files",
 	srcs=[
 		"data_api/audio_download/audio_downloader.py",
+		"data_api/audio_download/chapter_extractor.py",
 		"data_api/audio_download/factory.py",
 		"data_api/audio_download/feed_config.py",
 		"data_api/audio_download/rss/rss_audio_downloader.py",

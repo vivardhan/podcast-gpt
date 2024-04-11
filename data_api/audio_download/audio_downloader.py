@@ -96,24 +96,6 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 	def find_audios_to_download(self) -> List[DownloadStream]:
 		pass
 
-	@abc.abstractmethod
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
-		"""
-		Given the description of video, extract a list of chapter timestamp and title pairs
-
-		Params:
-			description: The text description of the video
-
-		Returns:
-			A list of tuples. Each tuple contains a chapter timestamp and title pair, eg:
-			[
-				("00:00:00", "Introduction"),
-				("00:02:40", "Sponsors"),
-				...
-			]
-		"""
-		pass
-
 	@classmethod
 	def extract_guest(cls, title: str) -> Optional[str]:
 		"""
