@@ -68,7 +68,7 @@ class QABot:
 		print("Once you're done, just type '{}' and hit enter.".format(self.quit_string))
 
 		while True:
-			curr_question = input("Enter your question:")
+			curr_question = input("Enter your question:\n")
 			if curr_question == self.quit_string:
 				print("Thanks, bye!")
 				break
