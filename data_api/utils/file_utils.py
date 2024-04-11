@@ -9,6 +9,6 @@ def create_temp_local_directory(directory_path: str) -> None:
 
 def delete_temp_local_directory(directory_path: str) -> None:
 	try:
-	    shutil.rmtree(directory_path)
+		shutil.rmtree(directory_path)
 	except OSError as e:
 	    print("Error: %s - %s." % (e.filename, e.strerror))

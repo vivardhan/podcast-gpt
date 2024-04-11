@@ -1,7 +1,6 @@
 # System Imports
 import os
-import re
-from typing import List, Optional, Tuple
+from typing import List
 
 # Third Party Imports
 from pytube import Stream, YouTube
@@ -9,7 +8,6 @@ from tqdm import tqdm
 
 # Package imports
 from data_api.audio_download.audio_downloader import AudioDownloader, DownloadStream
-from data_api.audio_download.factory import YoutubeFeedConfig
 from data_api.audio_download.youtube.video_lister import get_all_videos
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
@@ -61,7 +59,7 @@ class YoutubeAudioDownloader(AudioDownloader):
 				continue
 
 
-			chapters = self.config.chapter_extractor.extract_chapters(item["snippet"]["description"])
+			chapters = self.config.chapter_extractor(item["snippet"]["description"])
 
 			# Only download files that have chapter timestamps since those are the ones
 			# that correspond to podcast episodes. Others are likely to be shorts.

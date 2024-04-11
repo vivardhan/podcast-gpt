@@ -1,6 +1,5 @@
 # System Imports
 import json
-import os
 
 # Package Imports
 from data_api.utils.gcs_utils import (
@@ -33,7 +32,7 @@ def main():
 		max_chapter_size = 0
 		for cf in chapterized_files:
 			chapters = json.loads(download_textfile_as_string_gcs(gc_provider, cf))
-			for chapter_title, chapter_content in chapters.items():
+			for chapter_content in chapters.values():
 				chapters_count += 1
 				num_words = len(chapter_content.split())
 				max_chapter_size = max(max_chapter_size, num_words)

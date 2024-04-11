@@ -1,9 +1,6 @@
 # System Imports
 from typing import List
 
-# Third Party Imports
-from google.cloud import storage
-
 # Package Imports
 from google_client_provider import GoogleClientProvider
 

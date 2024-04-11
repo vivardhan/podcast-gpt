@@ -2,7 +2,6 @@
 from bisect import bisect
 from dataclasses import dataclass
 import json
-import os
 from typing import Dict, List, Optional
 
 # Package Imports
@@ -200,7 +199,7 @@ def convert_timestamp_string_to_milliseconds(timestamp_string: str) -> int:
 	"""
 	parts = timestamp_string.split(':')
 	if (len(parts) > 3):
-		print(timestamp)
+		print(timestamp_string)
 	assert len(parts) <= 3
 
 	conversion_factor = 1000
@@ -288,7 +287,7 @@ class TranscriptChapterizer:
 		aai_transcripts = GCSClient.list_files(aai_transcripts_folder, Paths.JSON_EXT)
 
 		chapterized_data_folder = Paths.get_chapterized_data_folder(self.podcast_name)
-		chapterized_files = GCSClient.list_files(chapterized_data_folder, Paths.JSON_EXT)
+		chapterized_files = set(GCSClient.list_files(chapterized_data_folder, Paths.JSON_EXT))
 
 		audio_data_folder = Paths.get_audio_data_folder(self.podcast_name)
 		metadata_files = set(GCSClient.list_files(audio_data_folder, Paths.METADATA_SUFFIX + Paths.JSON_EXT))

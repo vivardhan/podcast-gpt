@@ -32,7 +32,7 @@ def process_all_transcripts(podcast_name: str) -> None:
 
     aai_transcript_files = GCSClient.list_files(aai_folder, Paths.JSON_EXT)
     for transcript_file in aai_transcript_files:
-        process_aai_transcript(gc_provider, transcript_file)
+        process_aai_transcript(transcript_file)
 
     delete_temp_local_directory(podcast_name)
 

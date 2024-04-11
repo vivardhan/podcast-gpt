@@ -1,8 +1,7 @@
 # System Imports
 import os
-import re
 import requests
-from typing import List, Tuple
+from typing import List
 
 # Third Party Imports
 import feedparser
@@ -10,7 +9,6 @@ from tqdm import tqdm
 
 # Package Imports
 from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
-from data_api.audio_download.factory import RSSFeedConfig
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
 
@@ -20,7 +18,7 @@ class RSSAudioDownloader(AudioDownloader):
 		if not GCSClient.file_exists(stream.metadata_path):
 			stream.upload_metadata_to_gcs()
 
-		folder, file = os.path.split(stream.audio_path)
+		file = os.path.basename(stream.audio_path)
 		
 		if not GCSClient.file_exists(stream.audio_path):
 			print("Downloading {}".format(file))
@@ -43,10 +41,10 @@ class RSSAudioDownloader(AudioDownloader):
 		metadata_files = set(GCSClient.list_files(self.audio_folder, Paths.JSON_EXT))
 
 		for entry in tqdm(feed.entries):
-			chapters = self.config.chapter_extractor.extract_chapters(entry.content[0].value)
 			for link in entry.links:
 				if self.config.audio_extension in link.href:
 					title = entry.title.replace('/', '')
+					chapters = self.config.chapter_extractor(entry.content[0].value)
 					
 					if any([f in title for f in self.config.filter_out]):
 						break

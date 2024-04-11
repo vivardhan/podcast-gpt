@@ -1,6 +1,6 @@
 # System Imports
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List
 
 # Package Imports
 from data_api.audio_download.chapter_extractor import (

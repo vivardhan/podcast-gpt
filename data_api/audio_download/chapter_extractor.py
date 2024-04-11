@@ -3,12 +3,6 @@ import abc
 import re
 from typing import List, Tuple
 
-def extract_full_timestamps(start_pos: int, pattern: str) -> List[Tuple[str, str]]:
-	chapters = re.findall(self.config.chapters_regex, description[curr_pos:])
-
-	# Strip away the new line and space characters
-	return [(c[0].strip(), c[-1].strip()) for c in chapters]
-
 
 class ChapterExtractor(metaclass=abc.ABCMeta):
 
@@ -21,7 +15,7 @@ class ChapterExtractor(metaclass=abc.ABCMeta):
 	PARTIAL_TIMESTAMP_PATTERN = '(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)([0-5]?\d)'
 
 	@abc.abstractmethod
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
+	def __call__(self, description: str) -> List[Tuple[str, str]]:
 		"""
 		Given the description of video, extract a list of chapter timestamp and title pairs
 
@@ -43,7 +37,7 @@ class HubermanChapterExtractor(ChapterExtractor):
 	def __init__(self):
 		self.chapters_header = '\n\nTimestamps'
 
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
+	def __call__(self, description: str) -> List[Tuple[str, str]]:
 		curr_pos = description.find(self.chapters_header)
 		if curr_pos == -1:
 			return None
@@ -59,7 +53,7 @@ class LexFridmanChapterExtractor(ChapterExtractor):
 	def __init__(self):
 		self.chapters_header = '\n\nOUTLINE:'
 
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
+	def __call__(self, description: str) -> List[Tuple[str, str]]:
 		curr_pos = description.find(self.chapters_header)
 		if curr_pos == -1:
 			return None
@@ -91,7 +85,7 @@ class LexFridmanChapterExtractor(ChapterExtractor):
 
 class PeterAttiaChapterExtractor(ChapterExtractor):
 
-	def extract_chapters(self, description: str) -> List[Tuple[str, str]]:
+	def __call__(self, description: str) -> List[Tuple[str, str]]:
 		# First clean the description by replacing all href tags with the contained text.
 		# Eg. '<a href= "2021-05-11%2003:15:00%20EDT">3:15</a>' will be replaced by '3:15'
 		href_pattern = '(\<a href\=.*?\>)(.*?)(\<\/a\>)'
