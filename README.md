@@ -153,7 +153,7 @@ You can run a question answer bot that will answer your questions based on the 2
 
 ### 3.1 Testing locally
 
-#### 3.1.2 On Command Line
+#### 3.1.1 On Command Line
 ```bash
 bazel run //:run_qa_bot
 ```
