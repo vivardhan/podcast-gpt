@@ -70,13 +70,42 @@
         margin-right: auto;
         width:  90%;
         margin-top: auto;
-        border: 1px solid green;
+        border: 1px solid grey;
       }
       .media {
         width: 100%;
         max-width: 640px;
         aspect-ratio: 16 / 9;
       }
+      .collapsible {
+        background-color: #f9f9f9;
+        color: #444;
+        cursor: pointer;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        transition: 0.4s;
+    }
+    .active, .collapsible:hover {
+        background-color: #ccc;
+    }
+    .collapsible:after {
+        color: #777;
+        font-weight: bold;
+        float: right;
+        margin-left: 5px;
+    }
+    .active:after {
+        content: '\2212';
+    }
+    .content {
+        padding: 0 18px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        background-color: #f1f1f1;
+    }
     </style>
 </head>
 <body>
@@ -112,9 +141,25 @@
                     }
                 }
                 function createMediaHTML(match) {
-                    const description = '<p class="botText"><b>Podcast</b>: ' + match.podcast_title + '<br><b>Episode</b>: ' + match.episode_title + '<br><b>Chapter</b>: ' + match.chapter_title + '<br><b>Relevance</b>: ' + (match.score * 100).toFixed(2) + '%</p>';
+                    const description = `
+                        <p class="botText">
+                            <b>Podcast:</b>${match.podcast_title}: <br>
+                            <b>Episode:</b> ${match.episode_title}<br>
+                            <b>Relevance</b>:${(match.score * 100).toFixed(2)}%
+                        </p>
+                    `;
                     const media_embedding =  createMediaEmbedding(match.episode_url, match.start_timestamp, match.end_timestamp);
-                    return '<div>' + description + media_embedding + '</div><br>';
+                    // Wrap returned HTML in a collapsible container
+                    return `
+                        <button class="collapsible"><p class="botText">${match.chapter_title}</p></button>
+                        <div class="content">
+                            <div>
+                                ${description}
+                                ${media_embedding}
+                            </div>
+                        </div>
+                        <br>
+                    `;
                 }
 
                 function startStreaming(url, message) {
@@ -137,7 +182,13 @@
                             } else if (data.type === 'db_matches') {
                                 if (full_text !== i_dont_know) {
                                     const matches = data.matches;
-                                    $("#chatbox").append('<p class="botText"><b><u>References:</u></b><br>(Note: All media, when played, will automatically start and stop at the correct start and stop times for the given chapter.)</p>');
+                                    $("#chatbox").append(`
+                                        <p class="botText">
+                                            <b><u>References:</u></b><br>
+                                            1. Tap on a reference to expand or collapse it.<br>
+                                            2. All media, when played, will automatically start and stop at the correct times for the given chapter.
+                                        </p>
+                                    `);
                                     for (let i = 0; i < matches.length; i++) {
                                         $("#chatbox").append(createMediaHTML(matches[i]));
                                     }
@@ -185,6 +236,17 @@
                     if (e.which == 13) {
                         getBotResponse();
                     }
+                });
+                $(document).ready(function() {
+                    $(document).on('click', '.collapsible', function() {
+                        this.classList.toggle("active");
+                        var content = this.nextElementSibling;
+                        if (content.style.maxHeight){
+                            content.style.maxHeight = null;
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
                 });
             </script>
         </div>
