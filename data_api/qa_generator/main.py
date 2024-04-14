@@ -30,7 +30,7 @@ def num_tokens_from_string(string: str, encoding_name: str) -> int:
     return num_tokens
 
 def main():
-	gc_provider = GoogleClientProvider()
+	home_dir = os.environ.get('HOME') # Will return /Users/sjain2 or Users/vivardhan respectively for our laptops.
 
 	# Uncomment the following once qa_generator_models above is setup
 	for model_name, model_class in qa_generator_models.items():
@@ -65,15 +65,12 @@ def main():
 				all_token_counts.extend(curr_counts.values())
 
 
-
-
-
 	counts, bins = np.histogram(all_token_counts)
 	plt.figure()
 	plt.hist(bins[:-1], bins, weights=counts)
 	plt.xlabel("Num Tokens")
 	plt.ylabel("Num chapters")
-	plt.savefig('/Users/vkanoria/Desktop/counts.png')
+	plt.savefig(home_dir + '/Desktop/counts.png')
 
 	all_large = []
 	for k, v in all_large_counts.items():
@@ -88,7 +85,7 @@ def main():
 	plt.hist(bins[:-1], bins, weights=counts)
 	plt.xlabel("Num Tokens")
 	plt.ylabel("Num chapters")
-	plt.savefig('/Users/vkanoria/Desktop/counts_large.png')
+	plt.savefig(home_dir + '/Desktop/counts_large.png')
 
 				# print("Generating QA pairs for {}".format(episode_title))
 				# chapters_qa_pairs = {
