@@ -22,18 +22,26 @@
         margin-top: auto;
       }
       #userInput {
+        display: flex;
         margin-left: 5%;
         margin-right: 5%;
-        width: 100%;
+        width: 90%;
         margin-top: 60px;
         margin-bottom:  10px;
       }
       #textInput {
-        width: 90%;
+        flex-grow: 1;
         border: none;
         border-bottom: 3px solid black;
         font-family: monospace;
         font-size: 17px;
+        margin-right: 8px;
+      }
+      #submitBtn {
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        color: grey;
       }
       .userText {
         color: grey;
@@ -120,7 +128,8 @@
                     </p>
                 </div>
                 <div id="userInput">
-                    <input id="textInput" type="text" name="msg" placeholder="Type your question and hit enter:" />
+                    <input id="textInput" type="text" name="msg" placeholder="Question" />
+                    <button id="submitBtn">Submit</button>
                 </div>
             </div>
             <script>
@@ -131,13 +140,17 @@
                         if (end !== null) {
                             full_url += '&amp;end=' + end + ';';
                         }
-                        return '<iframe class="media" src=' + full_url + '></iframe>';
+                        return `<iframe class="media" src=${full_url}></iframe>`;
                     } else {
                         var timestamp_str = '#t=' + start;
                         if (end !== null) {
                             timestamp_str += ',' + end;
                         }
-                        return '<audio controls class="media"><source src=' + url + timestamp_str + ' type="audio/mp3"></audio>';
+                        return `
+                            <audio controls class="media">
+                                <source src=${url + timestamp_str} type="audio/mp3">
+                            </audio>
+                        `;
                     }
                 }
                 function createMediaHTML(match) {
@@ -185,8 +198,8 @@
                                     $("#chatbox").append(`
                                         <p class="botText">
                                             <b><u>References:</u></b><br>
-                                            - Tap on a reference to expand or collapse it.<br>
-                                            - All media, when played, will automatically start and stop at the correct times for the given reference.
+                                            <i>- Tap on a reference to expand or collapse it.</i><br>
+                                            <i>- All media, when played, will automatically start and stop at the correct times for the given reference.</i>
                                         </p>
                                     `);
                                     for (let i = 0; i < matches.length; i++) {
@@ -232,12 +245,18 @@
                     //         .scrollIntoView({ block: "start", behavior: "smooth" });
                     // });
                 }
-                $("#textInput").keypress(function (e) {
-                    if (e.which == 13) {
-                        getBotResponse();
-                    }
-                });
+                
                 $(document).ready(function() {
+                    $("#textInput").keypress(function (e) {
+                        if (e.which == 13) {
+                            getBotResponse();
+                        }
+                    });
+
+                    $("#submitBtn").click(function() {
+                        getBotResponse();
+                    });
+
                     $(document).on('click', '.collapsible', function() {
                         this.classList.toggle("active");
                         var content = this.nextElementSibling;
