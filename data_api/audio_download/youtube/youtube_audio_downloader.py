@@ -3,7 +3,7 @@ import os
 from typing import List
 
 # Third Party Imports
-from pytube import Stream, YouTube
+from pytube import YouTube
 from tqdm import tqdm
 
 # Package imports
