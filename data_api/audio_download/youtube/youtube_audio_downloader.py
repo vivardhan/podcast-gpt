@@ -37,8 +37,8 @@ class YoutubeAudioDownloader(AudioDownloader):
 					timeout=200,
 				)
 			except Exception as e:
-				raise e
 				print('Could not download: {}: {}'.format(stream.audio_path, e))
+				raise e
 
 			stream.upload_audio_to_gcs()
 
