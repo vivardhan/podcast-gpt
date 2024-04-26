@@ -7,7 +7,10 @@ from pytube import YouTube
 from tqdm import tqdm
 
 # Package imports
-from data_api.audio_download.audio_downloader import AudioDownloader, DownloadStream
+from data_api.audio_download.audio_downloader import (
+    AudioDownloader,
+    EpisodeMetadata,
+)
 from data_api.audio_download.youtube.video_lister import get_all_videos
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
@@ -15,20 +18,22 @@ from data_api.utils.paths import Paths
 YOUTUBE_PREFIX = "https://www.youtube.com/watch?v="
 
 class YoutubeAudioDownloader(AudioDownloader):
-	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
-		if not GCSClient.file_exists(stream.metadata_path):
-			stream.upload_metadata_to_gcs()
-
-		folder, file = os.path.split(stream.audio_path)
+	def download_audio_to_gcs(self, episode_metadata: EpisodeMetadata) -> None:
+		metadata_path = Paths.get_metadata_file_path(self.name, episode_metadata.title)
+		if not GCSClient.file_exists(metadata_path):
+			self.upload_metadata_to_gcs(episode_metadata)
 		
-		if not GCSClient.file_exists(stream.audio_path):
+		audio_path = Paths.get_audio_path(self.name, episode_metadata.title, self.config.audio_extension)
+		folder, file = os.path.split(audio_path)
+
+		if not GCSClient.file_exists(audio_path):
 			try:
 				print("Downloading {}".format(file))
-				yt = YouTube(stream.url)
+				yt = YouTube(episode_metadata.url + '.')
 				audio_stream = yt.streams.get_audio_only()
 
 				codec = audio_stream.mime_type.split('/')[-1]
-				assert codec == stream.extension
+				assert codec == self.config.audio_extension
 
 				audio_stream.download(
 					output_path=folder,
@@ -37,12 +42,12 @@ class YoutubeAudioDownloader(AudioDownloader):
 					timeout=200,
 				)
 			except Exception as e:
-				print('Could not download: {}: {}'.format(stream.audio_path, e))
+				print('Could not download: {}: {}'.format(audio_path, e))
 				raise e
 
-			stream.upload_audio_to_gcs()
+			self.upload_audio_to_gcs(episode_metadata)
 
-	def find_audios_to_download(self) -> List[DownloadStream]:
+	def find_audios_to_download(self) -> List[EpisodeMetadata]:
 		videos = get_all_videos(self.config.channel_id)
 
 		audio_files = set(GCSClient.list_files(self.audio_folder, self.config.audio_extension))
@@ -69,14 +74,11 @@ class YoutubeAudioDownloader(AudioDownloader):
 				guest = self.extract_guest(title)
 				video_url = YOUTUBE_PREFIX + item["contentDetails"]["videoId"]
 				files_to_download.append(
-					DownloadStream(
-						podcast_name=self.name,
-						url=video_url, 
-						folder_path=self.audio_folder, 
-						episode_title=title,
+					EpisodeMetadata(
+						url=video_url,
+						title=title,
 						chapters=chapters,
 						podcast_guest=guest,
-						extension=self.config.audio_extension,
 					)
 				)
 

@@ -14,6 +14,7 @@ py_library(
 	srcs=[
 		"data_api/utils/file_utils.py",
 		"data_api/utils/gcs_utils.py",
+        "data_api/utils/parallel_utils.py",
 		"data_api/utils/paths.py",
 		"data_api/utils/youtube_utils.py",
 	],

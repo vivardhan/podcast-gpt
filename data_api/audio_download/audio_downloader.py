@@ -1,9 +1,8 @@
 # System Imports
 import abc
-from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import json
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Third Party Imports
 from openai import OpenAI
@@ -15,6 +14,7 @@ from data_api.audio_download.feed_config import (
 )
 from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
 from data_api.utils.gcs_utils import GCSClient
+from data_api.utils.parallel_utils import ParallelProcessExecutor
 from data_api.utils.paths import Paths
 
 class MetadataKeys:
@@ -23,22 +23,16 @@ class MetadataKeys:
 	URL_KEY = "url"
 
 @dataclass
-class DownloadStream:
-	# Encapsulates information required to download from an audio stream
+class EpisodeMetadata:
+	# Encapsulates metadata for an episode
+ 
+ 	# The episode title
+	title: str
 
-	# Name of the podcast
-	podcast_name: str
-
-	# URL with stream
+	# URL with audio stream
 	url: str
 
-	# The local folder to download to
-	folder_path: str
-
-	# The episode title
-	episode_title: str
-
-	# Information about chapters in the audio
+	# Information about chapters in the episode
 	# Each element of the list is a pair with timestamp and chapter name
 	# Timestamps are formatted as "hh:mm:ss" where truncation is possible, eg:
 	# "03:23:45"
@@ -49,31 +43,12 @@ class DownloadStream:
 	# Podcast guest
 	podcast_guest: Optional[str]
 
-	# The audio extension
-	extension: str
-
-	# The audio file path
-	audio_path: str = field(init=False)
-
-	# The metadata file path
-	metadata_path: str = field(init=False)
-
-	def __post_init__(self):
-		self.audio_path = Paths.get_audio_path(self.podcast_name, self.episode_title, self.extension)
-		self.metadata_path = Paths.get_metadata_file_path(self.podcast_name, self.episode_title)
-
-	def upload_metadata_to_gcs(self) -> None:
-		GCSClient.upload_string_as_textfile(
-			self.metadata_path,
-			json.dumps({
-				MetadataKeys.GUEST_KEY: self.podcast_guest,
-				MetadataKeys.URL_KEY: self.url,
-				MetadataKeys.CHAPTERS_KEY: self.chapters,
-			}),
-		)
-
-	def upload_audio_to_gcs(self) -> None:
-		GCSClient.upload_file(self.audio_path)
+	def to_dict(self) -> Dict[str, Any]:
+		return {
+			MetadataKeys.GUEST_KEY: self.podcast_guest,
+			MetadataKeys.URL_KEY: self.url,
+			MetadataKeys.CHAPTERS_KEY: self.chapters,
+		}
 
 
 # Abstract class for AudioDownloaders
@@ -88,11 +63,11 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 		self.audio_folder = Paths.get_audio_data_folder(name)
 
 	@abc.abstractmethod
-	def download_audio_to_gcs(self, item: DownloadStream) -> None:
+	def download_audio_to_gcs(self, item: EpisodeMetadata) -> None:
 		pass
 
 	@abc.abstractmethod
-	def find_audios_to_download(self) -> List[DownloadStream]:
+	def find_audios_to_download(self) -> List[EpisodeMetadata]:
 		pass
 
 	@classmethod
@@ -151,15 +126,29 @@ class AudioDownloader(metaclass=abc.ABCMeta):
 
 		return None if response == no_guest_response else response
 
-	def download_all_audios(self) -> List[DownloadStream]:
+	def download_all_audios(self) -> List[EpisodeMetadata]:
 		create_temp_local_directory(self.audio_folder)
 
 		files_to_download = self.find_audios_to_download()
 		
 		print("Downloading {} audio files ... ".format(len(files_to_download)))
-		with ProcessPoolExecutor() as executor:
-			executor.map(self.download_audio_to_gcs, files_to_download)
+		ParallelProcessExecutor.run(self.download_audio_to_gcs, files_to_download)
 
 		delete_temp_local_directory(self.audio_folder)
 
 		return files_to_download
+	
+	def upload_metadata_to_gcs(self, episode_metadata: EpisodeMetadata) -> None:
+		GCSClient.upload_string_as_textfile(
+			Paths.get_metadata_file_path(self.name, episode_metadata.title),
+			json.dumps(episode_metadata.to_dict()),
+		)
+
+	def upload_audio_to_gcs(self, episode_metadata: EpisodeMetadata) -> None:
+		GCSClient.upload_file(
+			Paths.get_audio_path(
+				self.name,
+				episode_metadata.title,
+				self.config.audio_extension,
+			)
+		)

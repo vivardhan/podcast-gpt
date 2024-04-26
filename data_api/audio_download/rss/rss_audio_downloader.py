@@ -8,30 +8,35 @@ import feedparser
 from tqdm import tqdm
 
 # Package Imports
-from data_api.audio_download.audio_downloader import DownloadStream, AudioDownloader
+from data_api.audio_download.audio_downloader import (
+    AudioDownloader,
+    EpisodeMetadata,
+)
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
 
 class RSSAudioDownloader(AudioDownloader):
 
-	def download_audio_to_gcs(self, stream: DownloadStream) -> None:
-		if not GCSClient.file_exists(stream.metadata_path):
-			stream.upload_metadata_to_gcs()
+	def download_audio_to_gcs(self, episode_metadata: EpisodeMetadata) -> None:
+		metadata_path = Paths.get_metadata_file_path(self.name, episode_metadata.title)
+		if not GCSClient.file_exists(metadata_path):
+			self.upload_metadata_to_gcs(episode_metadata)
 
-		file = os.path.basename(stream.audio_path)
+		audio_path = Paths.get_audio_path(self.name, episode_metadata.title, self.config.audio_extension)
+		file = os.path.basename(audio_path)
 		
-		if not GCSClient.file_exists(stream.audio_path):
+		if not GCSClient.file_exists(audio_path):
 			print("Downloading {}".format(file))
 			try:
-				r = requests.get(stream.url)
-				with open(stream.audio_path, 'wb') as f:
+				r = requests.get(episode_metadata.url)
+				with open(audio_path, 'wb') as f:
 					f.write(r.content)
 			except Exception as e:
-				print('Could not download: {}: {}'.format(stream.audio_path, e))
+				print('Could not download: {}: {}'.format(audio_path, e))
 
-			stream.upload_audio_to_gcs()
+			self.upload_audio_to_gcs(episode_metadata)
 
-	def find_audios_to_download(self) -> List[DownloadStream]:
+	def find_audios_to_download(self) -> List[EpisodeMetadata]:
 		files_to_download = []
 
 		feed = feedparser.parse(self.config.url)
@@ -58,14 +63,11 @@ class RSSAudioDownloader(AudioDownloader):
 					if chapters:
 						guest = self.extract_guest(title)
 						files_to_download.append(
-							DownloadStream(
-								podcast_name=self.name,
-								url=link.href, 
-								folder_path=self.audio_folder,
-								episode_title=title,
+							EpisodeMetadata(
+								url=link.href,
+								title=title,
 								chapters=chapters,
 								podcast_guest=guest,
-								extension=self.config.audio_extension,
 							)
 						)
 

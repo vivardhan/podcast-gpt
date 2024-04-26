@@ -1,5 +1,4 @@
 # System Imports
-from concurrent.futures import ProcessPoolExecutor
 import json
 import requests
 from typing import List
@@ -13,6 +12,7 @@ from data_api.utils.file_utils import (
     delete_temp_local_directory,
 )
 from data_api.utils.gcs_utils import GCSClient
+from data_api.utils.parallel_utils import ParallelProcessExecutor
 from data_api.utils.paths import Paths
 
 # Replace with your API key
@@ -151,8 +151,7 @@ class AudioTranscriber:
             print("Transcribing {} files for {}".format(len(untranscribed_files), self.podcast_name))
             
             # Transcribe the untranscribed files in parallel
-            with ProcessPoolExecutor() as executor:
-                executor.map(self.transcribe_audio, untranscribed_files)
+            ParallelProcessExecutor.run(self.transcribe_audio, untranscribed_files)
         else:
             print("All audio files already transcribed for {}".format(self.podcast_name))
 
