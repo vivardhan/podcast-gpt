@@ -114,6 +114,20 @@ echo $QDRANT_API_KEY
 ```
 It should print out your API key.
 
+##### 2.1.5.2 AssemblyAI Credentials
+1. Contact Vivardhan Kanoria (vivardhan@gmail.com) to obtain the AssemblyAI API key for this project.
+2. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
+`export ASSEMBLYAI_API_KEY=[YOUR_API_KEY]`
+3. Then execute:
+```bash
+source ~/.bash_profile
+```
+4. Verify that the key is now available by executing:
+```bash
+echo $ASSEMBLYAI_API_KEY
+```
+It should print out your API key.
+
 ### 2.2 Future Setup
 
 #### 2.2.1 Activating your virtual environment

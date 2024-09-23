@@ -1,5 +1,6 @@
 # System Imports
 import json
+import os
 import requests
 from typing import List
 
@@ -15,8 +16,7 @@ from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.parallel_utils import ParallelProcessExecutor
 from data_api.utils.paths import Paths
 
-# Replace with your API key
-aai.settings.api_key = "9b22f02582ac4fdf892ba609d1080da0"
+aai.settings.api_key = os.environ.get("ASSEMBLYAI_API_KEY")
 
 base_url = "https://api.assemblyai.com/v2/transcript/"
 headers = {"authorization": aai.settings.api_key}
