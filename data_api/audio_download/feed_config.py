@@ -10,6 +10,7 @@ from data_api.audio_download.chapter_extractor import (
     PeterAttiaChapterExtractor,
 )
 
+
 @dataclass
 class YoutubeFeedConfig:
     # Config for a podcast with a Youtube Feed
@@ -44,6 +45,7 @@ lexfridman_config = YoutubeFeedConfig(
     chapter_extractor=LexFridmanChapterExtractor(),
 )
 
+
 @dataclass
 class RSSFeedConfig:
     # Config for a podcast with an RSS Feed
@@ -59,6 +61,7 @@ class RSSFeedConfig:
 
     # The chapter extractor instance
     chapter_extractor: ChapterExtractor
+
 
 peterattia_config = RSSFeedConfig(
     url="https://peterattiadrive.libsyn.com/rss",

@@ -11,13 +11,15 @@ app = Flask(__name__)
 
 podcast_gpt = QABot()
 
+
 @app.route("/")
-def home():    
+def home():
     return render_template("index.html")
+
 
 def generate_response(user_text: str):
     db_matches, response = podcast_gpt.answer_question(user_text)
-    
+
     # Use Server Sent Events (SSE) to send info to javascript
 
     # First send the answer string which is expected if the bot can't answer the question
@@ -31,10 +33,12 @@ def generate_response(user_text: str):
     # Finally send the vector DB matches
     yield f"data: {json.dumps({'type': 'db_matches', 'matches': [m.to_dict() for m in db_matches]})}\n\n"
 
+
 @app.route("/get")
-def get_bot_response():    
-    user_text = request.args.get('msg')
-    return Response(generate_response(user_text), mimetype='text/event-stream')
+def get_bot_response():
+    user_text = request.args.get("msg")
+    return Response(generate_response(user_text), mimetype="text/event-stream")
+
 
 if __name__ == "__main__":
     app.run()

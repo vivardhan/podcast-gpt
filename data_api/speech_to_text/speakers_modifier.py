@@ -3,9 +3,13 @@ import json
 import os
 
 # Package Imports
-from data_api.utils.file_utils import create_temp_local_directory, delete_temp_local_directory
+from data_api.utils.file_utils import (
+    create_temp_local_directory,
+    delete_temp_local_directory,
+)
 from data_api.utils.gcs_utils import GCSClient
 from data_api.utils.paths import Paths
+
 
 def process_aai_transcript(transcript_path: str) -> None:
     filename = os.path.basename(transcript_path)
@@ -26,6 +30,7 @@ def process_aai_transcript(transcript_path: str) -> None:
     else:
         return
 
+
 def process_all_transcripts(podcast_name: str) -> None:
     aai_folder = Paths.get_aai_transcript_folder(podcast_name)
     create_temp_local_directory(aai_folder)
@@ -40,6 +45,7 @@ def process_all_transcripts(podcast_name: str) -> None:
 def main():
     podcast_name = "PeterAttiaMD"
     process_all_transcripts(podcast_name)
+
 
 if __name__ == "__main__":
     main()

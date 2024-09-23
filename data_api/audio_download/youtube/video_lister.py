@@ -4,6 +4,7 @@ from typing import List
 # Package imports
 from data_api.utils.youtube_utils import YoutubeUtils
 
+
 def get_all_videos(channel_id: str) -> List:
     """
     Retrieves a list of video metadata items for a given channel_id
@@ -19,7 +20,7 @@ def get_all_videos(channel_id: str) -> List:
 
     # Find all playlist IDs for the provided channel ID
     response = YoutubeUtils.list_playlists(
-        channel_id=channel_id, 
+        channel_id=channel_id,
         part="snippet,contentDetails",
     )
 
@@ -30,13 +31,12 @@ def get_all_videos(channel_id: str) -> List:
 
         playlist_ids.append(item["contentDetails"]["relatedPlaylists"]["uploads"])
 
-
     # Extract all videos from each playlist ID
     all_videos = []
     for playlist_id in playlist_ids:
         all_videos.extend(
             YoutubeUtils.extract_videos_from_playlist(
-                playlist_id=playlist_id, 
+                playlist_id=playlist_id,
                 part="snippet,contentDetails",
             )
         )

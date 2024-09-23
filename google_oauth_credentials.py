@@ -6,7 +6,10 @@ from typing import List
 import google.oauth2.credentials
 from google.oauth2 import service_account
 
-def obtain_google_oauth_credentials(scopes: List[str]) -> google.oauth2.credentials.Credentials:
+
+def obtain_google_oauth_credentials(
+    scopes: List[str],
+) -> google.oauth2.credentials.Credentials:
     """
     Obtain google oauth2 credentials for the provided scopes
 
@@ -18,4 +21,5 @@ def obtain_google_oauth_credentials(scopes: List[str]) -> google.oauth2.credenti
     """
     SERVICE_ACCOUNT_FILE = os.path.join("credentials", "compute_engine_key.json")
     return service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=scopes)
+        SERVICE_ACCOUNT_FILE, scopes=scopes
+    )

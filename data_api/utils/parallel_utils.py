@@ -6,15 +6,13 @@ from concurrent.futures import (
 )
 from typing import List
 
+
 class ParallelProcessExecutor:
 
     @classmethod
     def run(cls, func, inputs: List) -> None:
         with ProcessPoolExecutor() as executor:
-            futures = [
-				executor.submit(func, i) 
-				for i in inputs
-			]
+            futures = [executor.submit(func, i) for i in inputs]
 
             for future in as_completed(futures):
                 cls._handle_exceptions(future)
@@ -25,4 +23,3 @@ class ParallelProcessExecutor:
             future.result()
         except Exception as e:
             print("An exception occurred: {}".format(e))
-        

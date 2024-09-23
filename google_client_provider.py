@@ -21,33 +21,36 @@ YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 BUCKET_NAME = "podcast-gpt-data"
 
+
 class GoogleClientProvider:
     """
-     This is an instance class so that a given binary only has one copy
-     Clients are expected to instantiate it once in their main() method
-     and pass the instance to objects that need to access google APIs.
+    This is an instance class so that a given binary only has one copy
+    Clients are expected to instantiate it once in their main() method
+    and pass the instance to objects that need to access google APIs.
     """
+
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(GoogleClientProvider, cls).__new__(cls)
-            
+
             if os.environ.get("IS_APP_ENGINE"):
                 # No need to provide credentials since we're in app engine
                 cls.STORAGE_CLIENT = storage.Client(project=PROJECT_ID)
                 cls.youtube_client = googleapiclient.discovery.build(
-                    YOUTUBE_API_SERVICE_NAME, 
-                    YOUTUBE_API_VERSION
+                    YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION
                 )
             else:
                 # Obtain credentials when running locally
                 CREDENTIALS = obtain_google_oauth_credentials(scopes=SCOPES)
-                cls.STORAGE_CLIENT = storage.Client(project=PROJECT_ID, credentials=CREDENTIALS)
+                cls.STORAGE_CLIENT = storage.Client(
+                    project=PROJECT_ID, credentials=CREDENTIALS
+                )
                 cls.youtube_client = googleapiclient.discovery.build(
-                    YOUTUBE_API_SERVICE_NAME, 
-                    YOUTUBE_API_VERSION, 
-                    credentials=CREDENTIALS
+                    YOUTUBE_API_SERVICE_NAME,
+                    YOUTUBE_API_VERSION,
+                    credentials=CREDENTIALS,
                 )
 
             cls.DATA_BUCKET = cls.STORAGE_CLIENT.get_bucket(BUCKET_NAME)
