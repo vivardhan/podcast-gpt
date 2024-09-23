@@ -166,12 +166,12 @@ bazel run //:extract_data
 This does the following for each podcast:
 1. Retrieves a list of episodes
 2. For episodes whose data isn't already available on GCS:
-- Retrieve and upload audio data to GCS
-- Parse chapters for the episode (timestamps and chapter descriptions) from the episode description and store it on GCS
-- Transcribe the audio to text using Assembly AI and upload 3 types of transcripts to GCS - without speaker identifiers, with speaker identifiers and json output taken directly from assembly AI. Upload all of these to GCS
-- Create transcripts for each chapter, given the chapter information above and upload these to GCS
+    - Retrieve and upload audio data to GCS
+    - Parse chapters for the episode (timestamps and chapter descriptions) from the episode description and store it on GCS
+    - Transcribe the audio to text using Assembly AI and upload 3 types of transcripts to GCS - without speaker identifiers, with speaker identifiers and json output taken directly from assembly AI. Upload all of these to GCS
+    - Create transcripts for each chapter, given the chapter information above and upload these to GCS
 3. Creates and uploads to GCS a database podcast titles, episode titles, chapter titles and chapter transcripts, along with embeddings for each chapter title and chapter transcript pair.
-4. Uploads the database to QDrant as a searchable vector database
+4. Uploads the database to QDrant as a searchable vector database for RAG
 
 ### 3.2 Accessing transcripts
 Run the following to see how many words are in all the raw transcripts for each podcast:
