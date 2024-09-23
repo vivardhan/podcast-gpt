@@ -74,6 +74,8 @@ For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu
 
 #### 2.1.5 Obtain Credentials
 
+Note: Contact Vivardhan Kanoria (vivardhan@gmail.com) to obtain credentials/access for the GCS project and all API keys below. If you'd like to fork this repo and use your own paid accounts on these services, you may do so.
+
 ##### 2.1.5.1 GCP Credentials
 1. Go to [Google Cloud Console](console.cloud.google.com) and make sure the 'podcast-gpt' project is selected in the drop down at the top.
 2. Click on the menu button in the top left corner (3 horizontal lines)
@@ -87,42 +89,39 @@ For Linux/Debian, follow these [instructions](https://bazel.build/install/ubuntu
 Note: The credentials folder is in .gitignore so that you don't accidentally commit any credentials to the repo.
 
 ##### 2.1.5.2 OpenAI Credentials
-1. Contact Vivardhan Kanoria (vivardhan@gmail.com) to obtain the OpenAI API key for this project.
-2. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
+1. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
 `export OPENAI_API_KEY=[YOUR_API_KEY]`
-3. Then execute:
+2. Then execute:
 ```bash
 source ~/.bash_profile
 ```
-4. Verify that the key is now available by executing:
+3. Verify that the key is now available by executing:
 ```bash
 echo $OPENAI_API_KEY
 ```
 It should print out your API key.
 
-##### 2.1.5.2 qdrant Credentials
-1. Contact Vivardhan Kanoria (vivardhan@gmail.com) to obtain the qdrant API key for this project.
-2. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
+##### 2.1.5.3 qdrant Credentials
+1. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
 `export QDRANT_API_KEY=[YOUR_API_KEY]`
-3. Then execute:
+2. Then execute:
 ```bash
 source ~/.bash_profile
 ```
-4. Verify that the key is now available by executing:
+3. Verify that the key is now available by executing:
 ```bash
 echo $QDRANT_API_KEY
 ```
 It should print out your API key.
 
-##### 2.1.5.2 AssemblyAI Credentials
-1. Contact Vivardhan Kanoria (vivardhan@gmail.com) to obtain the AssemblyAI API key for this project.
-2. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
+##### 2.1.5.4 AssemblyAI Credentials
+1. Add your API key as an environment variable. For Mac, add a line to your bash profile ('~/.bash_profile'):
 `export ASSEMBLYAI_API_KEY=[YOUR_API_KEY]`
-3. Then execute:
+2. Then execute:
 ```bash
 source ~/.bash_profile
 ```
-4. Verify that the key is now available by executing:
+3. Verify that the key is now available by executing:
 ```bash
 echo $ASSEMBLYAI_API_KEY
 ```
@@ -142,8 +141,8 @@ Once done working on the repo, run:
 deactivate
 ```
 
-#### 2.2.3 Resolving OpenAI API Key or qdrant API Key Errors:
-You may run into issues if python cannot find your OpenAI credentials or qdrant credentials in the environment variables. Rerun steps 3 and 4 from section 1.1.5.2 or 1.1.5.3 to resolve this.
+#### 2.2.3 Resolving OpenAI/qdrant/AssemblyAI API Key Errors:
+You may run into issues if python cannot find your OpenAI/qdrant/AssemblyAI credentials in the environment variables. Rerun steps 2 and 3 from sections 2.1.5.2/2.1.5.3/2.1.5.4 to resolve this.
 
 #### Resolving dependency errors
 If you get python import errors, use the following steps to resolve the error:
