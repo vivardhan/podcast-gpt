@@ -27,7 +27,7 @@ class GPT4QAGenerator(LLMQAGenerator):
                 The initialized model
         """
         self.openai_client = OpenAI()
-        self.model_version = "gpt-4-0125-preview"
+        self.model_version = "gpt-4o-miniu"
 
     def create_qa_prompt(
         self,

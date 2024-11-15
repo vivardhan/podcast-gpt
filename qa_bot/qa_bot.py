@@ -11,7 +11,7 @@ from data_api.embeddings.vector_db.vector_search import DatabaseMatch, VectorSea
 class QABot:
 
     client = OpenAI()
-    GPT_MODEL = "gpt-4-0125-preview"
+    GPT_MODEL = "gpt-4o-mini"
     I_DONT_KNOW = "Sorry, the podcasts do not cover this topic."
 
     def __init__(self):

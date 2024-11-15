@@ -60,7 +60,7 @@ class EpisodeMetadata:
 class AudioDownloader(metaclass=abc.ABCMeta):
 
     openai_client = OpenAI()
-    model_version = "gpt-4-0125-preview"
+    model_version = "gpt-4o-mini"
 
     def __init__(self, name: str, config: Union[YoutubeFeedConfig, RSSFeedConfig]):
         self.name = name
