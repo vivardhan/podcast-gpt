@@ -166,7 +166,7 @@ class DBUpdate:
     @classmethod
     def create_and_deploy_index_and_endpoint(cls):
         print("Uploading database to qdrant")
-        QdrantClientProvider.client.recreate_collection(
+        QdrantClientProvider.client.create_collection(
             collection_name=VectorDBConstants.COLLECTION_NAME,
             vectors_config=VectorParams(
                 size=VectorDBConstants.EMBEDDINGS_DIMENSION,

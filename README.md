@@ -163,6 +163,19 @@ To run the data extraction pipeline, run the following:
 bazel run //:extract_data
 ```
 
+If you want to only update the Vector DB on qdrant client due to the fact that the cluster got deleted for inactivity, do the following:
+1. Log in to qdrant.tech with Google
+2. Create a new free cluster
+3. Copy the API key and update your bash_profile. Also source the bash_profile.
+4. Access the cluster's URL by clicking on "Usage Example" on the cluster page. Update the client instance in qdrant_client_provider.py file with this URL.
+5. Run the command above with an additional argument as follows:
+```
+bazel run //:extract_data -- --vector-db-only True
+```
+6. Go to koyeb, login with github and open the podcast-gpt app settings. Update the QDRANT_API_KEY with the API key and click save.
+7. Test the bot using the instructions in sections 1.2.1 and 1.2.2.
+8. Commit and push your changes. This will trigger an automatic build and redeploy on koyeb.
+
 This does the following for each podcast:
 1. Retrieves a list of episodes
 2. For episodes whose data isn't already available on GCS:
